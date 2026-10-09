@@ -53,7 +53,7 @@ class ImagePickerInput(BaseModel):
     title: str = Field(min_length=1)
     attributes: dict[str, Any] = Field(default_factory=dict)
     images: list[ImageReference] = Field(min_length=1, max_length=32)
-    assessment_definition: AssessmentDefinition
+    assessment_definition: AssessmentDefinition | None = None
     assessment_instructions: str | None = Field(
         default=None, min_length=1, max_length=16000, pattern=r"\S",
         description="Optional vertical-specific assessment guidance, loaded by the caller",
@@ -66,4 +66,7 @@ class ImagePickerInput(BaseModel):
         ids = [image.image_id for image in self.images]
         if any(not value.strip() for value in ids) or len(ids) != len(set(ids)):
             raise ValueError("image_id must be nonblank and unique within a request")
+        if self.assessment_definition is None:
+            from .references import load_reference_definition
+            self.assessment_definition = load_reference_definition(self.business_unit, self.cms_vertical)
         return self

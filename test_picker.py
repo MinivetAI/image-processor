@@ -74,20 +74,32 @@ class PickerTests(unittest.TestCase):
         self.assertIn("applied_on_human", second["required"])
         self.assertNotIn("applied_on_human", first["properties"])
 
-    def test_all_319_definitions_compile_without_a_model(self):
+    def test_all_319_reference_definitions_resolve_without_a_client_definition(self):
         DEFAULT_DEFINITIONS = Path(__file__).parent / "reference/image_tags"
         files = list(DEFAULT_DEFINITIONS.rglob("*.json"))
         self.assertEqual(len(files), 319)
         for path in files:
             payload = {**self.payload, "business_unit": "Lifestyle" if path.parent.name == "LifeStyle" else path.parent.name,
                        "cms_vertical": path.stem}
+            del payload["assessment_definition"]
             data = json.loads(path.read_text())
-            payload["assessment_definition"] = {"fields": [{"name": t["tag"], "description": t["description"]} for t in data["tags"]]}
             prepared = prepare(payload)
             self.assertEqual(len(prepared.output_model.model_json_schema()["$defs"]["ProductTags"]["required"]), len(json.loads(path.read_text())["tags"]))
 
-    def test_custom_category_has_no_repository_dependency(self):
-        output = prepare({**self.payload, "business_unit": "Custom", "cms_vertical": "New Category"})
+    def test_client_definition_overrides_a_known_reference(self):
+        payload = {**self.payload, "assessment_definition": {"fields": [{"name": "custom_flag", "description": "Caller-defined field."}]}}
+        output = prepare(payload)
+        tags = output.output_model.model_json_schema()["$defs"]["ProductTags"]
+        self.assertEqual(tags["required"], ["custom_flag"])
+        self.assertNotIn("front_view", tags["properties"])
+
+    def test_custom_category_requires_a_client_definition(self):
+        payload = {**self.payload, "business_unit": "Custom", "cms_vertical": "New Category"}
+        del payload["assessment_definition"]
+        with self.assertRaisesRegex(ValueError, "supply assessment_definition explicitly"):
+            prepare(payload)
+        payload["assessment_definition"] = deepcopy(self.payload["assessment_definition"])
+        output = prepare(payload)
         self.assertEqual(output.output_model.model_validate(self.raw).model_dump(), self.raw)
 
     def test_missing_tags_and_extra_tags_are_rejected(self):
@@ -215,11 +227,11 @@ class PickerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             output.model_validate(raw)
 
-    def test_missing_definition_is_rejected(self):
+    def test_missing_definition_uses_matching_reference(self):
         payload = deepcopy(self.payload)
         del payload["assessment_definition"]
-        with self.assertRaises(ValueError):
-            prepare(payload)
+        prepared = prepare(payload)
+        self.assertEqual(prepared.input.assessment_definition.model_dump(), self.prepared.input.assessment_definition.model_dump())
 
     def test_loaded_instructions_reach_the_same_single_alfred_call(self):
         from image_picker.instructions import IMAGE_PICKER, build_instruction

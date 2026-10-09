@@ -49,7 +49,7 @@ answer sheet, instructions explain how to fill it, and tasks connect the pieces.
 
 | Responsibility | Original general task pattern / original image picker | Experiment | Reason |
 | --- | --- | --- | --- |
-| Inputs | Family-level [inputs.py](../../tasks/LLM/inputs.py) declares fixed request models. The original picker accepts image source strings, an enumerated `analytical_business_unit`, optional product context and aligned metadata. | [inputs.py](image_picker/inputs.py) accepts stable image IDs, sources, product context, a required assessment definition and optional assessment instructions. | A new category or assessment field should be a request change rather than a Python deployment. |
+| Inputs | Family-level [inputs.py](../../tasks/LLM/inputs.py) declares fixed request models. The original picker accepts image source strings, an enumerated `analytical_business_unit`, optional product context and aligned metadata. | [inputs.py](image_picker/inputs.py) accepts stable image IDs, sources, product context, an optional request definition and optional assessment instructions. | A custom category or field stays a request change; known archived categories can use their maintained reference definition. |
 | Outputs | Family-level [outputs.py](../../tasks/LLM/outputs.py) contains fixed output classes. The original picker switches among Lifestyle, BPC, NonApparel and Home/BGM guides. | [outputs.py](image_picker/outputs.py) builds per-image observation fields from the request and validates the common identity/selection structure. | Category-specific observations vary; downstream identity and evidence relationships stay consistent. |
 | Instructions | [instructions.py](../../tasks/LLM/ImagePickers/instructions.py) loads named prompt packages from repository files. The picker selects a package by business unit. | [instructions.py](image_picker/instructions.py) combines shared visual rules with optional caller-loaded vertical guidance. Field descriptions are embedded in the response schema. | Keep instructions loadable at scale without making the task own a configuration store or category lookup. |
 | Tasks | [tasks.py](../../tasks/LLM/ImagePickers/tasks.py) registers specs in `TASKS`. The registry and shared runner create Alfred tasks, select the BU guide and invoke post-processing. | [tasks.py](image_picker/tasks.py) validates input, builds the guide, assembles labeled images, calls `LLMServer.respond` once and validates the response. | Keep the experiment directly callable without another client abstraction or changes to the production runner. |
@@ -63,7 +63,10 @@ its structure.
 
 ## The request defines observations
 
-`assessment_definition.fields` is required. Each field has a name, description and type.
+`assessment_definition.fields` is required for custom categories. When the definition is
+omitted, the runtime loads the matching boolean tag set under `reference/image_tags/` from
+the request's business unit and CMS vertical. A supplied definition always takes priority.
+Each field has a name, description and type.
 Supported types are `boolean` (default), `string`, `integer`, `number` and string `enum`.
 Enums also supply their allowed `values`.
 
@@ -87,10 +90,10 @@ validated names and types. Every output observation is required and nullable: `n
 means uncertain, not false. Boolean true means visibly present and false means visibly
 absent. Other types must match their declared type; values are not silently coerced.
 
-Business-unit and category names are context strings. They do not select files or code.
-The 319 archived JSONs under `reference/image_tags/` are example material. The example
-generator converts two of them into request definitions; runtime does not load them.
-Do not reintroduce a mandatory category-to-repository-file mapping.
+Business-unit and category names select an archived reference file only when the caller
+omits `assessment_definition`; matching is case-insensitive and there is no fallback to a
+different category. The 319 archived JSONs under `reference/image_tags/` remain optional:
+new categories and any caller override use the supplied request definition instead.
 
 ## Instructions are also supplied by the caller
 

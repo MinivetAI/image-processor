@@ -39,7 +39,8 @@ inference model/usage metadata. `GET /healthz` reports the configured model.
 
 ## Request definitions
 
-Add `assessment_definition` to the normal product/image input:
+Add `assessment_definition` to the normal product/image input when you need a
+custom schema:
 
 ```json
 {
@@ -57,9 +58,13 @@ Supported field types are `boolean` (default), `string`, `integer`, `number`, an
 `enum`. Every output field is required and accepts `null` for uncertainty. Boolean false
 means visibly absent; true means visibly present. Definitions support 1–64 unique fields.
 This is a small flat definition format, not arbitrary JSON Schema or executable code.
-BU/category names are context strings and can be new categories. Fields and descriptions
-may change on each request. The 319 archived definitions are example material only;
-`generate_examples.py` converts two of them into request fields. Runtime reads none.
+When `assessment_definition` is omitted, the runtime loads the matching archived
+definition from `reference/image_tags/<business_unit>/<cms_vertical>.json` (matching is
+case-insensitive; `Lifestyle` maps to `LifeStyle`). Reference tags become boolean fields.
+If no matching reference exists, the request is rejected and the caller must supply a
+custom definition. A client-supplied `assessment_definition` always takes precedence,
+including for a known reference category. Fields and descriptions may therefore change on
+each request.
 
 ### Loadable instructions
 

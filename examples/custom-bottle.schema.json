@@ -1,0 +1,328 @@
+{
+  "$defs": {
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "tag": {
+          "enum": [
+            "lid_design",
+            "printed_capacity_ml",
+            "height_width_ratio",
+            "visible_text",
+            "mouth_visible"
+          ],
+          "title": "Tag",
+          "type": "string"
+        },
+        "detail": {
+          "description": "Brief visible support or exact uncertainty; no chain of thought",
+          "title": "Detail",
+          "type": "string"
+        },
+        "basis": {
+          "enum": [
+            "actual_product",
+            "actual_contents",
+            "packaging_depiction",
+            "application_result",
+            "human_contact",
+            "scene",
+            "unclear"
+          ],
+          "title": "Basis",
+          "type": "string"
+        },
+        "region": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional location within the image, e.g. left panel",
+          "title": "Region"
+        }
+      },
+      "required": [
+        "tag",
+        "detail",
+        "basis",
+        "region"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "ImageAssessment": {
+      "additionalProperties": false,
+      "properties": {
+        "image_id": {
+          "title": "Image Id",
+          "type": "string"
+        },
+        "variant_ids": {
+          "description": "All visibly supported listing variants; [] if none",
+          "items": {
+            "type": "string"
+          },
+          "title": "Variant Ids",
+          "type": "array"
+        },
+        "product_match": {
+          "enum": [
+            "matched",
+            "uncertain",
+            "mismatch",
+            "no_product"
+          ],
+          "title": "Product Match",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "usable",
+            "limited",
+            "unusable"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "duplicate_of": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Earlier image ID only for a redundant view; null otherwise",
+          "title": "Duplicate Of"
+        },
+        "tags": {
+          "$ref": "#/$defs/ProductTags"
+        },
+        "evidence": {
+          "description": "Evidence for every positive/value observation; false needs none, null may explain uncertainty",
+          "items": {
+            "$ref": "#/$defs/Evidence"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "limitations": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Limitations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "image_id",
+        "variant_ids",
+        "product_match",
+        "quality",
+        "duplicate_of",
+        "tags",
+        "evidence",
+        "limitations"
+      ],
+      "title": "ImageAssessment",
+      "type": "object"
+    },
+    "ProductTags": {
+      "additionalProperties": false,
+      "properties": {
+        "lid_design": {
+          "anyOf": [
+            {
+              "enum": [
+                "screw",
+                "flip",
+                "straw"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Visible lid mechanism; null if unclear. Use null when uncertain.",
+          "title": "Lid Design"
+        },
+        "printed_capacity_ml": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Capacity printed visibly in ml; never infer from size. Use null when uncertain.",
+          "title": "Printed Capacity Ml"
+        },
+        "height_width_ratio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Approximate visible bottle height divided by width. Use null when uncertain.",
+          "title": "Height Width Ratio"
+        },
+        "visible_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Exact readable text on the bottle. Use null when uncertain.",
+          "title": "Visible Text"
+        },
+        "mouth_visible": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Actual drinking opening is visibly exposed. Use null when uncertain.",
+          "title": "Mouth Visible"
+        }
+      },
+      "required": [
+        "lid_design",
+        "printed_capacity_ml",
+        "height_width_ratio",
+        "visible_text",
+        "mouth_visible"
+      ],
+      "title": "ProductTags",
+      "type": "object"
+    },
+    "SelectedReference": {
+      "additionalProperties": false,
+      "properties": {
+        "image_id": {
+          "title": "Image Id",
+          "type": "string"
+        },
+        "roles": {
+          "description": "Supported non-null observations assigned to this reference",
+          "items": {
+            "enum": [
+              "lid_design",
+              "printed_capacity_ml",
+              "height_width_ratio",
+              "visible_text",
+              "mouth_visible"
+            ],
+            "type": "string"
+          },
+          "title": "Roles",
+          "type": "array"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "image_id",
+        "roles",
+        "reason"
+      ],
+      "title": "SelectedReference",
+      "type": "object"
+    },
+    "Variant": {
+      "additionalProperties": false,
+      "properties": {
+        "variant_id": {
+          "title": "Variant Id",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "image_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Image Ids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "variant_id",
+        "description",
+        "image_ids"
+      ],
+      "title": "Variant",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assessments": {
+      "items": {
+        "$ref": "#/$defs/ImageAssessment"
+      },
+      "title": "Assessments",
+      "type": "array"
+    },
+    "variants": {
+      "items": {
+        "$ref": "#/$defs/Variant"
+      },
+      "title": "Variants",
+      "type": "array"
+    },
+    "selected_variant_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Selected Variant Id"
+    },
+    "selected_references": {
+      "items": {
+        "$ref": "#/$defs/SelectedReference"
+      },
+      "title": "Selected References",
+      "type": "array"
+    },
+    "unresolved": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Unresolved",
+      "type": "array"
+    }
+  },
+  "required": [
+    "assessments",
+    "variants",
+    "selected_variant_id",
+    "selected_references",
+    "unresolved"
+  ],
+  "title": "ImagePickerResult",
+  "type": "object"
+}

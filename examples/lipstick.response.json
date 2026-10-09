@@ -1,0 +1,151 @@
+{
+  "assessments": [
+    {
+      "image_id": "img-01",
+      "variant_ids": [
+        "V1"
+      ],
+      "product_match": "matched",
+      "quality": "usable",
+      "duplicate_of": null,
+      "tags": {
+        "front_view": true,
+        "logo": true,
+        "human_interaction": false,
+        "rich_environment": false,
+        "contents_visible": false,
+        "open_lid_cap": false,
+        "texture_detail": false,
+        "applicator_detail": false,
+        "applied_on_human": false,
+        "multi_pack": false,
+        "combo": false,
+        "ignore": false
+      },
+      "evidence": [
+        {
+          "tag": "front_view",
+          "detail": "Actual tube front and branding are visible.",
+          "basis": "actual_product",
+          "region": null
+        },
+        {
+          "tag": "logo",
+          "detail": "Printed mark is on the tube, not an overlay.",
+          "basis": "actual_product",
+          "region": null
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "image_id": "img-02",
+      "variant_ids": [
+        "V1"
+      ],
+      "product_match": "matched",
+      "quality": "usable",
+      "duplicate_of": null,
+      "tags": {
+        "front_view": false,
+        "logo": false,
+        "human_interaction": false,
+        "rich_environment": false,
+        "contents_visible": true,
+        "open_lid_cap": true,
+        "texture_detail": true,
+        "applicator_detail": false,
+        "applied_on_human": false,
+        "multi_pack": false,
+        "combo": false,
+        "ignore": false
+      },
+      "evidence": [
+        {
+          "tag": "contents_visible",
+          "detail": "Actual red lipstick bullet is exposed.",
+          "basis": "actual_contents",
+          "region": null
+        },
+        {
+          "tag": "open_lid_cap",
+          "detail": "Cap is removed beside the matching tube.",
+          "basis": "actual_product",
+          "region": null
+        },
+        {
+          "tag": "texture_detail",
+          "detail": "Close view shows the pictured bullet colour and surface.",
+          "basis": "actual_contents",
+          "region": null
+        }
+      ],
+      "limitations": []
+    },
+    {
+      "image_id": "img-03",
+      "variant_ids": [],
+      "product_match": "uncertain",
+      "quality": "usable",
+      "duplicate_of": null,
+      "tags": {
+        "front_view": false,
+        "logo": false,
+        "human_interaction": false,
+        "rich_environment": false,
+        "contents_visible": false,
+        "open_lid_cap": false,
+        "texture_detail": false,
+        "applicator_detail": false,
+        "applied_on_human": null,
+        "multi_pack": false,
+        "combo": false,
+        "ignore": false
+      },
+      "evidence": [
+        {
+          "tag": "applied_on_human",
+          "detail": "Lips have red colour, but the pictured result cannot be attributed to this exact lipstick.",
+          "basis": "application_result",
+          "region": null
+        }
+      ],
+      "limitations": [
+        "No matching tube or other identity evidence is pictured."
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "variant_id": "V1",
+      "description": "Pictured red lipstick tube and matching exposed bullet",
+      "image_ids": [
+        "img-01",
+        "img-02"
+      ]
+    }
+  ],
+  "selected_variant_id": "V1",
+  "selected_references": [
+    {
+      "image_id": "img-01",
+      "roles": [
+        "front_view",
+        "logo"
+      ],
+      "reason": "Identifiable product and branding."
+    },
+    {
+      "image_id": "img-02",
+      "roles": [
+        "contents_visible",
+        "open_lid_cap",
+        "texture_detail"
+      ],
+      "reason": "Actual contents and ready-state exposure."
+    }
+  ],
+  "unresolved": [
+    "img-03 cannot establish an application result for the selected lipstick variant."
+  ]
+}

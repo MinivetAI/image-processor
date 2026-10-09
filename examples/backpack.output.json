@@ -1,0 +1,206 @@
+{
+  "example_kind": "illustrative_fixture_not_model_output",
+  "llm_calls": 0,
+  "product_id": "ILLUSTRATIVE-BACKPACK",
+  "result": {
+    "assessments": [
+      {
+        "image_id": "img-01",
+        "variant_ids": [
+          "V1"
+        ],
+        "product_match": "matched",
+        "quality": "usable",
+        "duplicate_of": null,
+        "tags": {
+          "front_view": true,
+          "logo": true,
+          "human_interaction": false,
+          "rich_environment": false,
+          "side_view": false,
+          "back_view": false,
+          "surface_detail": false,
+          "interior_visible": false,
+          "closure_detail": false,
+          "carried_or_worn": false,
+          "multi_pack": false,
+          "combo": false,
+          "ignore": false
+        },
+        "evidence": [
+          {
+            "tag": "front_view",
+            "detail": "Complete blue bag front is visible.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "logo",
+            "detail": "Brand mark is visible on the bag panel.",
+            "basis": "actual_product",
+            "region": null
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "image_id": "img-02",
+        "variant_ids": [
+          "V1"
+        ],
+        "product_match": "matched",
+        "quality": "usable",
+        "duplicate_of": null,
+        "tags": {
+          "front_view": false,
+          "logo": false,
+          "human_interaction": false,
+          "rich_environment": false,
+          "side_view": true,
+          "back_view": false,
+          "surface_detail": false,
+          "interior_visible": false,
+          "closure_detail": true,
+          "carried_or_worn": false,
+          "multi_pack": false,
+          "combo": false,
+          "ignore": false
+        },
+        "evidence": [
+          {
+            "tag": "side_view",
+            "detail": "Side profile of the same bag is visible.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "closure_detail",
+            "detail": "Visible zipper and pull at the side pocket.",
+            "basis": "actual_product",
+            "region": null
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "image_id": "img-03",
+        "variant_ids": [
+          "V1"
+        ],
+        "product_match": "matched",
+        "quality": "usable",
+        "duplicate_of": null,
+        "tags": {
+          "front_view": false,
+          "logo": false,
+          "human_interaction": true,
+          "rich_environment": false,
+          "side_view": false,
+          "back_view": true,
+          "surface_detail": false,
+          "interior_visible": false,
+          "closure_detail": false,
+          "carried_or_worn": true,
+          "multi_pack": false,
+          "combo": false,
+          "ignore": false
+        },
+        "evidence": [
+          {
+            "tag": "back_view",
+            "detail": "Back panel and both straps are visible.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "human_interaction",
+            "detail": "Both straps rest on the wearer's shoulders; bag already worn.",
+            "basis": "human_contact",
+            "region": null
+          },
+          {
+            "tag": "carried_or_worn",
+            "detail": "The same blue bag is already worn on the back.",
+            "basis": "human_contact",
+            "region": null
+          }
+        ],
+        "limitations": []
+      },
+      {
+        "image_id": "img-04",
+        "variant_ids": [
+          "V1"
+        ],
+        "product_match": "matched",
+        "quality": "usable",
+        "duplicate_of": "img-01",
+        "tags": {
+          "front_view": true,
+          "logo": false,
+          "human_interaction": false,
+          "rich_environment": false,
+          "side_view": false,
+          "back_view": false,
+          "surface_detail": false,
+          "interior_visible": false,
+          "closure_detail": false,
+          "carried_or_worn": false,
+          "multi_pack": false,
+          "combo": false,
+          "ignore": false
+        },
+        "evidence": [
+          {
+            "tag": "front_view",
+            "detail": "Repeated front packshot of the same bag.",
+            "basis": "actual_product",
+            "region": null
+          }
+        ],
+        "limitations": []
+      }
+    ],
+    "variants": [
+      {
+        "variant_id": "V1",
+        "description": "Blue backpack with pictured front logo and side zipper",
+        "image_ids": [
+          "img-01",
+          "img-02",
+          "img-03",
+          "img-04"
+        ]
+      }
+    ],
+    "selected_variant_id": "V1",
+    "selected_references": [
+      {
+        "image_id": "img-01",
+        "roles": [
+          "front_view",
+          "logo"
+        ],
+        "reason": "Clear overall design and branding."
+      },
+      {
+        "image_id": "img-02",
+        "roles": [
+          "side_view",
+          "closure_detail"
+        ],
+        "reason": "Complementary profile and zipper evidence."
+      },
+      {
+        "image_id": "img-03",
+        "roles": [
+          "back_view",
+          "human_interaction",
+          "carried_or_worn"
+        ],
+        "reason": "Back design and exact wearing relationship."
+      }
+    ],
+    "unresolved": []
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "cms_vertical": "artificial_flower",
+  "tags": [
+    {
+      "tag": "front_view",
+      "description": "Identify the product’s visible front or principal face, including its actual packaging front; do not guess orientation from an ambiguous crop."
+    },
+    {
+      "tag": "logo",
+      "description": "Identify a visible brand mark on the actual product or packaging; exclude watermarks, promotional overlays and branding on unrelated props."
+    },
+    {
+      "tag": "human_interaction",
+      "description": "Identify visible human contact with the actual product, such as holding, touching or carrying; a nearby person alone is insufficient."
+    },
+    {
+      "tag": "rich_environment",
+      "description": "Identify the product or attributable application/result in a relevant setting with visible contextual detail; a plain backdrop alone does not qualify."
+    },
+    {
+      "tag": "side_view",
+      "description": "Identify a visibly supported side/profile surface; a three-quarter image may also show a front or back surface."
+    },
+    {
+      "tag": "surface_detail",
+      "description": "Identify a recognizable close-up of product texture, finish, colour, joins or construction; do not infer material composition."
+    },
+    {
+      "tag": "stem_detail",
+      "description": "Identify visible artificial blooms, petal surfaces, stems or attachment details; do not mistake a real flower prop for the catalog artificial stems."
+    },
+    {
+      "tag": "arranged_view",
+      "description": "Identify the supplied artificial flowers visibly arranged together or in a contextual vessel; the vessel is not necessarily included."
+    },
+    {
+      "tag": "deformed_state",
+      "description": "Identify a stem visibly bent in an intentional arrangement, only where the actual design is flexible. Classify the visible state, not an inferred transition; exclude damage and image distortion."
+    },
+    {
+      "tag": "multi_pack",
+      "description": "Identify separate products of the same kind shown as a catalog assortment, including variants; exclude repeated views of one item, unrelated props and packaging art mistaken for units."
+    },
+    {
+      "tag": "combo",
+      "description": "Identify different product types visibly represented together as a catalog set, supported by item context; exclude unrelated props, duplicate views and packaging art mistaken for actual items."
+    },
+    {
+      "tag": "ignore",
+      "description": "Ignore only when neither the catalog product nor an attributable application/result or contents depiction is identifiable, or dominant text prevents assessing that evidence. Unbranded items are valid."
+    }
+  ]
+}

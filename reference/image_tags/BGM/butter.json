@@ -1,0 +1,57 @@
+{
+  "cms_vertical": "butter",
+  "tags": [
+    {
+      "tag": "front_view",
+      "description": "Identify the product’s visible front or principal face, including its actual packaging front; do not guess orientation from an ambiguous crop."
+    },
+    {
+      "tag": "logo",
+      "description": "Identify a visible brand mark on the actual product or packaging; exclude watermarks, promotional overlays and branding on unrelated props."
+    },
+    {
+      "tag": "human_interaction",
+      "description": "Identify visible human contact with the actual product, such as holding, touching or carrying; a nearby person alone is insufficient."
+    },
+    {
+      "tag": "rich_environment",
+      "description": "Identify the product or attributable application/result in a relevant setting with visible contextual detail; a plain backdrop alone does not qualify."
+    },
+    {
+      "tag": "contents_visible",
+      "description": "Identify actual visible contents: block, curl, spread or melted appearance actually visible, without inferring a temporal transition; printed packaging pictures are a separate tag."
+    },
+    {
+      "tag": "contents_depicted_on_packaging",
+      "description": "Identify a clear printed depiction of contents on actual packaging; keep it distinct from exposed contents, ingredient icons and promotional claims."
+    },
+    {
+      "tag": "texture_detail",
+      "description": "Identify a recognizable close-up showing block, curl, spread or melted appearance actually visible, without inferring a temporal transition."
+    },
+    {
+      "tag": "open_packaging",
+      "description": "Identify a visibly open actual packet, wrapper, lid or container; loose contents alone do not prove the pictured pack is open."
+    },
+    {
+      "tag": "served_or_prepared",
+      "description": "Identify a served/prepared form attributable to the catalog food, even without its pack; unrelated dishes and packaging-only serving artwork do not qualify."
+    },
+    {
+      "tag": "deformed_state",
+      "description": "Identify an actual visibly spread, curled or softened portion; do not infer heating or elapsed melting. Classify the visible state, not an inferred transition; exclude damage and image distortion."
+    },
+    {
+      "tag": "multi_pack",
+      "description": "Identify separate products of the same kind shown as a catalog assortment, including variants; exclude repeated views of one item, unrelated props and packaging art mistaken for units."
+    },
+    {
+      "tag": "combo",
+      "description": "Identify different product types visibly represented together as a catalog set, supported by item context; exclude unrelated props, duplicate views and packaging art mistaken for actual items."
+    },
+    {
+      "tag": "ignore",
+      "description": "Ignore only when neither the catalog product nor an attributable application/result or contents depiction is identifiable, or dominant text prevents assessing that evidence. Unbranded items are valid."
+    }
+  ]
+}

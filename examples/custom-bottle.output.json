@@ -1,0 +1,77 @@
+{
+  "example_kind": "illustrative_fixture_not_model_output",
+  "llm_calls": 0,
+  "product_id": "ILLUSTRATIVE-CUSTOM-BOTTLE",
+  "result": {
+    "assessments": [
+      {
+        "image_id": "bottle-01",
+        "variant_ids": [
+          "V1"
+        ],
+        "product_match": "matched",
+        "quality": "limited",
+        "duplicate_of": null,
+        "tags": {
+          "lid_design": "screw",
+          "printed_capacity_ml": 500,
+          "height_width_ratio": 2.8,
+          "visible_text": "500 ml",
+          "mouth_visible": null
+        },
+        "evidence": [
+          {
+            "tag": "lid_design",
+            "detail": "Threaded cap is beside the bottle.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "printed_capacity_ml",
+            "detail": "500 ml is printed on the bottle.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "height_width_ratio",
+            "detail": "Visible silhouette is approximately 2.8 times as tall as wide.",
+            "basis": "actual_product",
+            "region": null
+          },
+          {
+            "tag": "visible_text",
+            "detail": "The readable text is 500 ml.",
+            "basis": "actual_product",
+            "region": null
+          }
+        ],
+        "limitations": [
+          "Angle obscures the drinking opening."
+        ]
+      }
+    ],
+    "variants": [
+      {
+        "variant_id": "V1",
+        "description": "Pictured printed 500 ml bottle",
+        "image_ids": [
+          "bottle-01"
+        ]
+      }
+    ],
+    "selected_variant_id": "V1",
+    "selected_references": [
+      {
+        "image_id": "bottle-01",
+        "roles": [
+          "lid_design",
+          "visible_text"
+        ],
+        "reason": "Visible cap mechanism and label; opening remains uncertain."
+      }
+    ],
+    "unresolved": [
+      "Drinking opening is obscured."
+    ]
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "product_id": "ILLUSTRATIVE-CUSTOM-BOTTLE",
+  "business_unit": "Custom",
+  "cms_vertical": "my_water_bottle",
+  "title": "Printed 500 ml bottle",
+  "assessment_instructions": "Prioritize visible lid design and readable capacity markings. Do not infer thermal insulation or leak resistance from appearance.",
+  "images": [
+    {
+      "image_id": "bottle-01",
+      "source": "replace-with-real-images/bottle.jpg"
+    }
+  ],
+  "assessment_definition": {
+    "fields": [
+      {
+        "name": "lid_design",
+        "type": "enum",
+        "values": [
+          "screw",
+          "flip",
+          "straw"
+        ],
+        "description": "Visible lid mechanism; null if unclear."
+      },
+      {
+        "name": "printed_capacity_ml",
+        "type": "integer",
+        "description": "Capacity printed visibly in ml; never infer from size."
+      },
+      {
+        "name": "height_width_ratio",
+        "type": "number",
+        "description": "Approximate visible bottle height divided by width."
+      },
+      {
+        "name": "visible_text",
+        "type": "string",
+        "description": "Exact readable text on the bottle."
+      },
+      {
+        "name": "mouth_visible",
+        "type": "boolean",
+        "description": "Actual drinking opening is visibly exposed."
+      }
+    ]
+  }
+}

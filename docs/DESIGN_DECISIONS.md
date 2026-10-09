@@ -49,11 +49,11 @@ answer sheet, instructions explain how to fill it, and tasks connect the pieces.
 
 | Responsibility | Original general task pattern / original image picker | Experiment | Reason |
 | --- | --- | --- | --- |
-| Inputs | Family-level [inputs.py](../../tasks/LLM/inputs.py) declares fixed request models. The original picker accepts image source strings, an enumerated `analytical_business_unit`, optional product context and aligned metadata. | [inputs.py](image_picker/inputs.py) accepts stable image IDs, sources, product context, an optional request definition and optional assessment instructions. | A custom category or field stays a request change; known archived categories can use their maintained reference definition. |
-| Outputs | Family-level [outputs.py](../../tasks/LLM/outputs.py) contains fixed output classes. The original picker switches among Lifestyle, BPC, NonApparel and Home/BGM guides. | [outputs.py](image_picker/outputs.py) builds per-image observation fields from the request and validates the common identity/selection structure. | Category-specific observations vary; downstream identity and evidence relationships stay consistent. |
-| Instructions | [instructions.py](../../tasks/LLM/ImagePickers/instructions.py) loads named prompt packages from repository files. The picker selects a package by business unit. | [instructions.py](image_picker/instructions.py) combines shared visual rules with optional caller-loaded vertical guidance. Field descriptions are embedded in the response schema. | Keep instructions loadable at scale without making the task own a configuration store or category lookup. |
-| Tasks | [tasks.py](../../tasks/LLM/ImagePickers/tasks.py) registers specs in `TASKS`. The registry and shared runner create Alfred tasks, select the BU guide and invoke post-processing. | [tasks.py](image_picker/tasks.py) validates input, builds the guide, assembles labeled images, calls `LLMServer.respond` once and validates the response. | Keep the experiment directly callable without another client abstraction or changes to the production runner. |
-| Selection | [post.py](../../tasks/LLM/ImagePickers/post.py) dispatches to BU-specific Python selectors that normalize grouping and choose final references. | The model proposes grouping and references in the same response; Python checks their consistency and eligibility without rewriting judgments. | Fine-grained selection should follow the requested evidence rather than a growing collection of category-specific Python policies. |
+| Inputs | Family-level [inputs.py](https://github.com/MinivetAI/minivet-architecture/blob/ca24e45/tasks/LLM/inputs.py) declares fixed request models. The original picker accepts image source strings, an enumerated `analytical_business_unit`, optional product context and aligned metadata. | [inputs.py](../src/image_processor/image_picker/inputs.py) accepts stable image IDs, sources, product context, an optional request definition and optional assessment instructions. | A custom category or field stays a request change; known archived categories can use their maintained reference definition. |
+| Outputs | Family-level [outputs.py](https://github.com/MinivetAI/minivet-architecture/blob/ca24e45/tasks/LLM/outputs.py) contains fixed output classes. The original picker switches among Lifestyle, BPC, NonApparel and Home/BGM guides. | [outputs.py](../src/image_processor/image_picker/outputs.py) builds per-image observation fields from the request and validates the common identity/selection structure. | Category-specific observations vary; downstream identity and evidence relationships stay consistent. |
+| Instructions | [instructions.py](https://github.com/MinivetAI/minivet-architecture/blob/ca24e45/tasks/LLM/ImagePickers/instructions.py) loads named prompt packages from repository files. The picker selects a package by business unit. | [instructions.py](../src/image_processor/image_picker/instructions.py) combines shared visual rules with optional caller-loaded vertical guidance. Field descriptions are embedded in the response schema. | Keep instructions loadable at scale without making the task own a configuration store or category lookup. |
+| Tasks | [tasks.py](https://github.com/MinivetAI/minivet-architecture/blob/ca24e45/tasks/LLM/ImagePickers/tasks.py) registers specs in `TASKS`. The registry and shared runner create Alfred tasks, select the BU guide and invoke post-processing. | [tasks.py](../src/image_processor/image_picker/tasks.py) validates input, builds the guide, assembles labeled images, calls `LLMServer.respond` once and validates the response. | Keep the experiment directly callable without another client abstraction or changes to the production runner. |
+| Selection | [post.py](https://github.com/MinivetAI/minivet-architecture/blob/ca24e45/tasks/LLM/ImagePickers/post.py) dispatches to BU-specific Python selectors that normalize grouping and choose final references. | The model proposes grouping and references in the same response; Python checks their consistency and eligibility without rewriting judgments. | Fine-grained selection should follow the requested evidence rather than a growing collection of category-specific Python policies. |
 
 The experimental `tasks.py` is an execution function, not the same registration dictionary
 used by the old pattern. That difference is deliberate and limited to this experiment.
@@ -170,7 +170,7 @@ or generation limits. Start with small listings and measure output size and late
 
 ### Limited changes to Alfred
 
-[alfie.py](alfred_src/alfred/alfie.py) adds opt-in `return_envelope` and
+[alfie.py](../vendor/alfred/alfred/alfie.py) adds opt-in `return_envelope` and
 `allow_redirects` arguments to `LLMServer.respond`. Envelope access exposes finish reason,
 model and usage; disabling redirects prevents an automatic resend. Existing callers keep
 the default message return and redirect behavior. HTTP success is now explicitly 2xx;
@@ -225,8 +225,8 @@ reference limits, request-supplied instructions, local HTTP behavior, CLI artifa
 one-call failure behavior. The legacy Alfred message return is also checked. Run them with:
 
 ```sh
-cd experiments/image-picking
-.venv/bin/python -m unittest test_picker -v
+# From the repository root:
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
 ```
 
 The backpack, lipstick and custom bottle outputs are labeled illustrative fixtures and

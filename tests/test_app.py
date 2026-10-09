@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, patch
 
 from fastapi.testclient import TestClient
 
-from app import create_app
-from generate_examples import examples
-from server.alfred import build_server
+from image_processor.app import create_app
+from image_processor.server.alfred import build_server
+from scripts.generate_examples import examples
 
 
 class AppTests(unittest.TestCase):

@@ -1,6 +1,7 @@
 """Contract and one-call orchestration tests; no real model or network required."""
 from copy import deepcopy
 import json
+import os
 from pathlib import Path
 import tempfile
 import subprocess
@@ -14,8 +15,9 @@ from alfred import LLMServer
 
 from pydantic import ValidationError
 
-from generate_examples import examples
-from image_picker import ImagePickerInput, build_output_model, run_image_picker
+from scripts.generate_examples import examples
+from image_processor.image_picker import ImagePickerInput, build_output_model, run_image_picker
+from image_processor.image_picker.references import REFERENCE_ROOT
 from types import SimpleNamespace
 
 def prepare(payload):
@@ -75,7 +77,7 @@ class PickerTests(unittest.TestCase):
         self.assertNotIn("applied_on_human", first["properties"])
 
     def test_all_319_reference_definitions_resolve_without_a_client_definition(self):
-        DEFAULT_DEFINITIONS = Path(__file__).parent / "reference/image_tags"
+        DEFAULT_DEFINITIONS = REFERENCE_ROOT
         files = list(DEFAULT_DEFINITIONS.rglob("*.json"))
         self.assertEqual(len(files), 319)
         for path in files:
@@ -234,7 +236,7 @@ class PickerTests(unittest.TestCase):
         self.assertEqual(prepared.input.assessment_definition.model_dump(), self.prepared.input.assessment_definition.model_dump())
 
     def test_loaded_instructions_reach_the_same_single_alfred_call(self):
-        from image_picker.instructions import IMAGE_PICKER, build_instruction
+        from image_processor.image_picker.instructions import IMAGE_PICKER, build_instruction
         guidance = "Prioritize lid design and drinking opening."
         payload = {**self.payload, "assessment_instructions": guidance}
         self.assertEqual(build_instruction(), IMAGE_PICKER)
@@ -260,14 +262,15 @@ class PickerTests(unittest.TestCase):
                 respond.assert_not_called()
 
     def test_prepare_saves_the_composed_loaded_instruction(self):
-        from image_picker.instructions import build_instruction
+        from image_processor.image_picker.instructions import build_instruction
         payload, _ = self.cases["custom-bottle"]
         with tempfile.TemporaryDirectory() as directory:
             input_path = Path(directory) / "input.json"
             output_path = Path(directory) / "prepared"
             input_path.write_text(json.dumps(payload))
-            completed = subprocess.run([sys.executable, str(Path(__file__).with_name("run.py")),
-                "prepare", str(input_path), "--output", str(output_path)], capture_output=True, text=True, timeout=15)
+            completed = subprocess.run([sys.executable, "-m", "image_processor.cli",
+                "prepare", str(input_path), "--output", str(output_path)], capture_output=True, text=True, timeout=15,
+                cwd=directory, env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")})
             self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
             self.assertEqual((output_path / "instruction.txt").read_text(), build_instruction(payload["assessment_instructions"]))
             self.assertEqual(json.loads((output_path / "run.json").read_text())["llm_calls"], 0)
@@ -338,9 +341,10 @@ class PickerTests(unittest.TestCase):
                 output = Path(directory) / "run"
                 input_path.write_text(json.dumps(self.payload))
                 completed = subprocess.run([
-                    sys.executable, str(Path(__file__).with_name("run.py")), "run", str(input_path),
+                    sys.executable, "-m", "image_processor.cli", "run", str(input_path),
                     "--output", str(output), "--base-url", f"http://127.0.0.1:{server.server_port}/v1",
-                    "--model", "mock"], capture_output=True, text=True, timeout=15)
+                    "--model", "mock"], capture_output=True, text=True, timeout=15,
+                    cwd=directory, env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src")})
                 self.assertEqual(completed.returncode, 0, completed.stderr + completed.stdout)
                 self.assertEqual(json.loads((output / "run.json").read_text())["llm_calls"], 1)
                 self.assertEqual(json.loads((output / "raw-response.json").read_text()), self.raw)

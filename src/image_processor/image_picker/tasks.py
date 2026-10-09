@@ -1,5 +1,5 @@
 """One Alfred call. Configuration and session ownership belong to the caller."""
-from server.alfred import LLMServer, request_assessment
+from ..server.alfred import LLMServer, request_assessment
 
 from .inputs import ImagePickerInput
 from .instructions import build_instruction

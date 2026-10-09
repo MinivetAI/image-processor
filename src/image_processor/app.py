@@ -5,9 +5,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from controllers.health import router as health_router
-from controllers.image_picker import router as picker_router
-from server.alfred import LLMServer, build_server, client_session
+from .controllers.health import router as health_router
+from .controllers.image_picker import router as picker_router
+from .server.alfred import LLMServer, build_server, client_session
 
 
 DEFAULT_HOST = "0.0.0.0"

@@ -1,7 +1,7 @@
 """HTTP adapter for the existing image-picker contract."""
 from fastapi import APIRouter, HTTPException, Request
 
-from image_picker import ImagePickerInput, run_image_picker
+from ..image_picker import ImagePickerInput, run_image_picker
 
 router = APIRouter()
 

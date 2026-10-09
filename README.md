@@ -1,14 +1,14 @@
 # Experimental image picker
 
-Read [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md) for the original-branch comparison,
+Read [DESIGN_DECISIONS.md](docs/DESIGN_DECISIONS.md) for the original-branch comparison,
 reasons for this design, and decisions future changes should preserve.
 
 One vision-model call assesses the supplied images and chooses complementary references
-for one product variant. The assessment definition comes in the request. No category
-lookup or category-specific Python is required. Recipe generation can consume the stable
+for one product variant. Assessment definitions are supplied in the request or resolved
+from CMS reference tags. Recipe generation can consume the stable
 image IDs, variant grouping, reference roles, evidence and limitations in a separate call.
 
-The modules have distinct jobs:
+Application code lives under `src/image_processor/`. The modules have distinct jobs:
 
 | File | Responsibility |
 | --- | --- |
@@ -37,11 +37,11 @@ controllers/ → image_picker/ → server/alfred.py → VLM
 ```sh
 export IMAGE_PICKER_LLM_URL='http://YOUR-ENDPOINT/v1'
 export IMAGE_PICKER_LLM_MODEL='YOUR-MODEL'
-.venv/bin/python app.py --disable-thinking --port 8071
+PYTHONPATH=src .venv/bin/python -m image_processor.app --disable-thinking --port 8071
 ```
 
 Call `POST /v1/image-processor/pick` with the same JSON contract accepted by
-`run.py`; image `source` values may be HTTP URLs, data URIs, or paths accessible
+`image_processor.cli`; image `source` values may be HTTP URLs, data URIs, or paths accessible
 to the service. The result contains `product_id`, validated `result`, and
 inference model/usage metadata. `GET /healthz` reports the configured model.
 
@@ -67,7 +67,7 @@ Supported field types are `boolean` (default), `string`, `integer`, `number`, an
 means visibly absent; true means visibly present. Definitions support 1–64 unique fields.
 This is a small flat definition format, not arbitrary JSON Schema or executable code.
 When `assessment_definition` is omitted, the runtime loads the matching archived
-definition from `reference/image_tags/<business_unit>/<cms_vertical>.json` (matching is
+definition from `src/image_processor/reference/image_tags/<business_unit>/<cms_vertical>.json` (matching is
 case-insensitive; `Lifestyle` maps to `LifeStyle`). Reference tags become boolean fields.
 If no matching reference exists, the request is rejected and the caller must supply a
 custom definition. A client-supplied `assessment_definition` always takes precedence,
@@ -101,16 +101,17 @@ uncertain fields can carry explanatory evidence but cannot become reference role
 
 ## Setup and examples
 
-Use Python 3.11 or newer. From this directory:
+Use Python 3.11 or newer. Run these commands from the repository root. `PYTHONPATH=src`
+makes the application importable without installing it as a package.
 
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/pip install -r requirements-dev.txt
-.venv/bin/python -m unittest discover -v
-.venv/bin/python generate_examples.py
-.venv/bin/python run.py prepare examples/custom-bottle.input.json --output runs/bottle-prepared
-.venv/bin/python run.py validate examples/custom-bottle.input.json --response examples/custom-bottle.response.json --output runs/bottle-validation
+.venv/bin/pip install -r tests/requirements.txt
+PYTHONPATH=src .venv/bin/python -m unittest discover -s tests -v
+PYTHONPATH=src .venv/bin/python scripts/generate_examples.py
+PYTHONPATH=src .venv/bin/python -m image_processor.cli prepare examples/custom-bottle.input.json --output runs/bottle-prepared
+PYTHONPATH=src .venv/bin/python -m image_processor.cli validate examples/custom-bottle.input.json --response examples/custom-bottle.response.json --output runs/bottle-validation
 ```
 
 Backpack, lipstick and a custom bottle have input, schema, response and output examples.
@@ -127,16 +128,16 @@ HTTP URLs must be accessible to the backend. Supply endpoint and model explicitl
 export IMAGE_PICKER_LLM_URL='http://YOUR-ENDPOINT/v1'
 export IMAGE_PICKER_LLM_MODEL='YOUR-MODEL'
 # Set IMAGE_PICKER_LLM_API_KEY if needed.
-.venv/bin/python run.py run real-input.json --output runs/first-run --disable-thinking
+PYTHONPATH=src .venv/bin/python -m image_processor.cli run real-input.json --output runs/first-run --disable-thinking
 ```
 
 `--disable-thinking` is specific to Qwen/vLLM; omit it for other backends.
-`endpoint.example.env` contains the internal deployment configuration previously checked
+`config/endpoint.example.env` contains the internal deployment configuration previously checked
 with its model-listing API. No inference is performed at import time.
 
 ```python
 from alfred import LLMServer
-from image_picker import run_image_picker
+from image_processor.image_picker import run_image_picker
 
 server = LLMServer(base_url, model, retries=0)
 try:

@@ -2,11 +2,12 @@
 import json
 from pathlib import Path
 
-from image_picker import ImagePickerInput, build_output_model
-from image_picker.instructions import build_instruction
+from image_processor.image_picker import ImagePickerInput, build_output_model
+from image_processor.image_picker.instructions import build_instruction
+from image_processor.image_picker.references import REFERENCE_ROOT
 
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def make_row(fields, image_id, present, *, uncertain=(), duplicate_of=None,
@@ -24,7 +25,7 @@ def make_row(fields, image_id, present, *, uncertain=(), duplicate_of=None,
 
 def add_definition(payload, example_file):
     """Example authoring only: runtime never reads this archive."""
-    data = json.loads((ROOT / "reference/image_tags" / example_file).read_text())
+    data = json.loads((REFERENCE_ROOT / example_file).read_text())
     fields = [{"name": item["tag"], "type": "boolean", "description": item["description"]} for item in data["tags"]]
     payload["assessment_definition"] = {"fields": fields}
     return fields

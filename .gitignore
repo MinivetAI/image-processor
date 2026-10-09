@@ -1,6 +1,10 @@
 .venv/
 runs/
-reference/image_tags.zip
+src/image_processor/reference/image_tags.zip
 __pycache__/
 *.py[cod]
 *.egg-info/
+.env
+.env.*
+!.env.example
+.DS_Store

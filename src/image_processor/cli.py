@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 import time
 
-from image_picker import ImagePickerInput, build_output_model, run_image_picker
-from image_picker.instructions import build_instruction
-from server.alfred import build_server, client_session
+from .image_picker import ImagePickerInput, build_output_model, run_image_picker
+from .image_picker.instructions import build_instruction
+from .server.alfred import build_server, client_session
 
 
 def write_json(path, value):

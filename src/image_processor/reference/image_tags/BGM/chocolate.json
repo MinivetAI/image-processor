@@ -39,7 +39,7 @@
     },
     {
       "tag": "baking",
-      "description": "Use the supplied product title and attributes to determine whether this chocolate is intended for baking. Treat attributes such as type=baking chocolate, type=Compound Chocolate, or type=Couverture as baking use. When title or attributes indicate baking use, mark true only for images matched to the listed product and cite the relevant product context; otherwise mark false. Do not infer baking use from an unrelated dessert or packaging artwork."
+      "description": "Use the supplied product title and attributes to determine whether this chocolate is intended for baking. Consider the product's stated type, intended use and form together; mark true when the supplied product information clearly identifies it as baking-oriented. Apply this only to images matched to the listed product and cite the relevant product context; otherwise mark false. Do not infer baking use from an unrelated dessert or packaging artwork."
     },
     {
       "tag": "multi_pack",

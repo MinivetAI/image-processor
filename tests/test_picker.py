@@ -113,7 +113,7 @@ class PickerTests(unittest.TestCase):
         self.assertIn("baking", tags["required"])
         self.assertIn("baking", tags["properties"])
         self.assertIn("title and attributes", tags["properties"]["baking"]["description"])
-        self.assertIn("type=Couverture", tags["properties"]["baking"]["description"])
+        self.assertIn("stated type, intended use and form", tags["properties"]["baking"]["description"])
         evidence = prepare(payload).output_model.model_json_schema()["$defs"]["Evidence"]
         self.assertIn("product_context", evidence["properties"]["basis"]["enum"])
 

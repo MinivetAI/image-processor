@@ -158,15 +158,16 @@ Alfred's media builder and `respond` with the generated Pydantic guide. There is
 HTTP client, client protocol, adapter, response-guide wrapper or synchronous bridge inside
 the task. The CLI's `asyncio.run` is just its command-line entry point.
 
-The original shared Alfred `Task` defaults to one schema-repair attempt. That can add an
-inference call; the experiment deliberately bypasses that repair loop. Redirect following
-is disabled too. A truncated response, malformed JSON, transport error or inconsistent
-selection fails instead of causing a retry, repair or fallback to the old picker. Provider
-extras cannot replace messages, response schema or response mode.
+The picker permits one corrective request after malformed, truncated or inconsistent model
+output. The schema requires exactly one row per image and enumerates valid image numbers;
+Python repeats coverage and cross-field checks. If the second response is still invalid,
+the API returns a degraded result with unknown observations and no selected references.
+Rejected model envelopes and validation reasons are kept in a local diagnostics directory.
+Transport retries and redirects remain disabled. Provider extras cannot replace messages,
+response schema or response mode.
 
-A successful invocation makes one inference request; rejected input makes none. Failed
-CLI runs report an unknown call count rather than inventing a count. There is no recipe
-planning inside the image-picking call.
+A successful first attempt uses one inference request; an invalid model response can use two.
+Rejected input makes none. There is no recipe planning inside the image-picking call.
 
 The token budget grows with image and field count and can be overridden. This is a budget
 estimate, not a guarantee that every 32-image/64-field request fits the backend's context
@@ -225,8 +226,8 @@ indices and BU-specific fields. Existing consumers need an explicit integration 
 
 At implementation snapshot `4e12341`, 26 tests pass. They cover all 319 archived field sets,
 custom types and nulls, malformed definitions, image/variant/evidence relationships,
-reference limits, request-supplied instructions, local HTTP behavior, CLI artifacts and
-one-call failure behavior. The legacy Alfred message return is also checked. Run them with:
+reference limits, request-supplied instructions, local HTTP behavior, CLI artifacts,
+bounded correction and degraded fallback. The legacy Alfred message return is also checked. Run them with:
 
 ```sh
 # From the repository root:
@@ -237,11 +238,11 @@ The backpack, lipstick and custom bottle outputs are labeled illustrative fixtur
 were generated without an LLM. Their paths are placeholders. No real-model image-picking
 accuracy or latency has been established. A model-listing endpoint check is not a visual
 evaluation. Successful runs save input, schema, composed instruction, response envelope,
-validated result, usage and timing; failed validation currently does not retain the raw
-envelope. Use fresh output directories to avoid mixing artifacts.
+validated result, usage and timing. Corrective attempts retain their raw envelope in local
+diagnostics outside the repository. Use fresh output directories to avoid mixing artifacts.
 
 Before connecting a recipe task, evaluate real listings with human-reviewed identity,
 variant grouping, duplicate decisions, selected roles and attribution. Measure failure
-rate, latency and token usage. Keep recipe generation separate and preserve the one-call
-budget for each task. Do not add an extra LLM router, tagging stage or repair loop to make
-configuration dynamic: the caller already supplies the definition and instructions.
+rate, latency and token usage. Keep recipe generation separate from image assessment and
+downstream generation. Do not add an extra LLM router or tagging stage to make configuration
+dynamic: the caller already supplies the definition and instructions.

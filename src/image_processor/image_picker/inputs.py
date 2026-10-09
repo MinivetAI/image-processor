@@ -69,4 +69,9 @@ class ImagePickerInput(BaseModel):
         if self.assessment_definition is None:
             from .references import load_reference_definition
             self.assessment_definition = load_reference_definition(self.business_unit, self.cms_vertical)
+        if (self.assessment_instructions is None
+                and self.business_unit.casefold() == "bgm"
+                and self.cms_vertical.casefold() == "chocolate"):
+            from .references import load_reference_instructions
+            self.assessment_instructions = load_reference_instructions(self.business_unit, self.cms_vertical)
         return self

@@ -1,4 +1,4 @@
-"""Contract and one-call orchestration tests; no real model or network required."""
+"""Contract and bounded-recovery tests; no real model or network required."""
 from copy import deepcopy
 import json
 import os
@@ -62,15 +62,57 @@ class PickerTests(unittest.TestCase):
             self.assertEqual(len(result["result"]["selected_references"]), 3)
         self.assertNotIn("tasks.registry", sys.modules)
 
-    def test_failure_does_not_make_a_repair_call(self):
+    def test_invalid_response_is_retried_then_returns_safe_degraded_result(self):
         raw = deepcopy(self.raw)
         raw["assessments"].pop()
         server = LLMServer("http://unused/v1", "fixture", retries=0)
         envelope = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(raw)}}]}
         with patch.object(server, "respond", new=AsyncMock(return_value=envelope)) as respond:
-            with self.assertRaises(ValueError):
-                asyncio.run(run_image_picker(self.payload, server))
-            self.assertEqual(respond.await_count, 1)
+            value = asyncio.run(run_image_picker(self.payload, server))
+            self.assertEqual(respond.await_count, 2)
+            self.assertEqual(value["processing_status"], "degraded")
+            self.assertEqual(len(value["result"]["assessments"]), len(self.payload["images"]))
+            self.assertEqual(value["result"]["variants"], [])
+            self.assertIsNone(value["result"]["selected_variant_id"])
+            self.assertEqual(value["result"]["selected_references"], [])
+            self.assertTrue(all(set(row["tags"].values()) == {None}
+                                for row in value["result"]["assessments"]))
+            self.assertEqual(len(value["attempt_diagnostics"]), 2)
+            retry_instruction = respond.await_args_list[1].args[0][0]["content"]
+            self.assertIn("CORRECTION REQUIRED", retry_instruction)
+
+    def test_invalid_first_response_is_corrected_on_retry(self):
+        raw = deepcopy(self.raw)
+        raw["assessments"].pop()
+        invalid = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(raw)}}]}
+        valid = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(self.raw)}}]}
+        server = LLMServer("http://unused/v1", "fixture", retries=0)
+        with patch.object(server, "respond", new=AsyncMock(side_effect=[invalid, valid])) as respond:
+            value = asyncio.run(run_image_picker(self.payload, server))
+        self.assertEqual(respond.await_count, 2)
+        self.assertEqual(value["processing_status"], "complete")
+        self.assertEqual(value["result"], to_public_result(self.prepared.input, self.raw).model_dump())
+        self.assertEqual(len(value["attempt_diagnostics"]), 1)
+
+    def test_schema_requires_exact_assessment_count_and_valid_positions(self):
+        schema = self.prepared.output_model.model_json_schema()
+        assessment_list = schema["properties"]["assessments"]
+        self.assertEqual(assessment_list["minItems"], len(self.payload["images"]))
+        self.assertEqual(assessment_list["maxItems"], len(self.payload["images"]))
+        number_schema = schema["$defs"]["ImageAssessment"]["properties"]["image_number"]
+        self.assertEqual(number_schema["enum"], list(range(1, len(self.payload["images"]) + 1)))
+
+    def test_image_preparation_validation_returns_unknown_degraded_result(self):
+        server = LLMServer("http://unused/v1", "fixture", retries=0)
+        with patch("image_processor.image_picker.tasks.prepare_images",
+                   new=AsyncMock(side_effect=ValueError("Image dimensions exceed the 40 megapixel limit"))):
+            with patch.object(server, "respond", new=AsyncMock()) as respond:
+                result = asyncio.run(run_image_picker(self.payload, server))
+        self.assertEqual(result["processing_status"], "degraded")
+        self.assertEqual(result["result"]["assessments"][0]["tags"],
+                         {field.name: None for field in self.prepared.input.assessment_definition.fields})
+        self.assertEqual(result["result"]["selected_references"], [])
+        respond.assert_not_called()
 
     def test_retry_configuration_is_rejected_before_inference(self):
         server = LLMServer("http://unused/v1", "fixture", retries=1)
@@ -86,6 +128,45 @@ class PickerTests(unittest.TestCase):
         self.assertNotIn("carried_or_worn", second["properties"])
         self.assertIn("applied_on_human", second["required"])
         self.assertNotIn("applied_on_human", first["properties"])
+
+    def test_chocolate_logo_guidance_distinguishes_brand_marks_from_infographic_text(self):
+        payload = {**self.payload, "business_unit": "BGM", "cms_vertical": "chocolate"}
+        payload.pop("assessment_definition", None)
+        inp = prepare(payload).input
+        definition = inp.assessment_definition
+        logo = next(field for field in definition.fields if field.name == "logo")
+        self.assertIn("clearly identifiable brand logo or wordmark", logo.description)
+        self.assertIn("ingredient/feature infographic copy", logo.description)
+        self.assertIn("Readable text alone is not a logo", logo.description)
+        instructions = inp.assessment_instructions
+        self.assertIn("Chocolate-only policy", instructions)
+        self.assertIn("do not select that image for the logo role", instructions)
+        self.assertIn("not different presentation states of the same product", instructions)
+        self.assertIn("The tags open_packaging, contents_visible, and texture_detail describe an image; they must never by themselves cause a variant split", instructions)
+        self.assertIn("include a clear package-front image", instructions)
+        self.assertIn("complementary, nonredundant image showing its actual open or unwrapped chocolate contents or texture", instructions)
+        self.assertIsNone(self.prepared.input.assessment_instructions)
+
+    def test_chocolate_false_logo_drops_contradictory_logo_evidence(self):
+        payload = {**self.payload, "business_unit": "BGM", "cms_vertical": "chocolate"}
+        payload.pop("assessment_definition", None)
+        inp = ImagePickerInput.model_validate(payload)
+        tags = {field.name: False for field in inp.assessment_definition.fields}
+        raw = {
+            "assessments": [{
+                "image_number": number, "variant_labels": [], "product_match": "no_product",
+                "quality": "unusable", "duplicate_of": None, "tags": dict(tags),
+                "evidence": ([{"tag": "logo", "detail": "Brand wording in an ingredients panel",
+                               "basis": "packaging_depiction", "region": None}] if number == 3 else []),
+                "limitations": [],
+            } for number in range(1, len(inp.images) + 1)],
+            "variants": [], "selected_variant_label": None, "selected_references": [],
+            "unresolved": ["No eligible chocolate image was selected."],
+        }
+        result = to_public_result(inp, raw)
+        image3 = next(item for item in result.assessments if item.image_id == inp.images[2].image_id)
+        self.assertFalse(image3.tags.logo)
+        self.assertNotIn("logo", [item.tag for item in image3.evidence])
 
     def test_all_319_reference_definitions_resolve_without_a_client_definition(self):
         DEFAULT_DEFINITIONS = REFERENCE_ROOT
@@ -360,17 +441,17 @@ class PickerTests(unittest.TestCase):
             self.assertEqual(response["inference"]["usage"], {"completion_tokens": 123})
             self.assertEqual(Handler.calls, 1)
             Handler.finish_reason = "length"
-            with self.assertRaisesRegex(ValueError, "Incomplete"):
-                asyncio.run(execute())
-            self.assertEqual(Handler.calls, 2)
+            degraded = asyncio.run(execute())
+            self.assertEqual(degraded["processing_status"], "degraded")
+            self.assertEqual(Handler.calls, 3)
             Handler.status_code = 307
             with self.assertRaisesRegex(RuntimeError, "307"):
                 asyncio.run(execute())
-            self.assertEqual(Handler.calls, 3)  # No automatic redirect or retry.
+            self.assertEqual(Handler.calls, 4)  # No automatic redirect or transport retry.
             Handler.status_code = 503
             with self.assertRaisesRegex(RuntimeError, "503"):
                 asyncio.run(execute())
-            self.assertEqual(Handler.calls, 4)  # Alfred retries are disabled too.
+            self.assertEqual(Handler.calls, 5)  # Alfred retries are disabled too.
 
             Handler.status_code = 200
             Handler.finish_reason = "stop"
@@ -398,7 +479,7 @@ class PickerTests(unittest.TestCase):
                 self.assertEqual(json.loads((output / "run.json").read_text())["llm_calls"], 1)
                 self.assertEqual(json.loads((output / "raw-response.json").read_text()), self.raw)
                 self.assertEqual(json.loads((output / "response-envelope.json").read_text())["model"], "mock")
-                self.assertEqual(Handler.calls, 6)
+                self.assertEqual(Handler.calls, 7)
         finally:
             server.shutdown()
             server.server_close()

@@ -55,7 +55,7 @@ def create_app(server: LLMServer, *, disable_thinking: bool = False) -> FastAPI:
 
     app = FastAPI(
         title="Image Processor",
-        description="Assess product images and select evidence-backed reference images in one LLM call.",
+        description="Assess product images and select evidence-backed reference images.",
         version="1.0.0",
         lifespan=lifespan,
     )

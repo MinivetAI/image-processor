@@ -1,4 +1,5 @@
 """Model response contract and deterministic mapping to stable API IDs."""
+from copy import deepcopy
 import re
 from typing import Literal
 
@@ -39,7 +40,8 @@ def build_output_model(inp: ImagePickerInput):
         description=(str, ...))
     assessment = create_model(
         "ImageAssessment", __base__=Contract,
-        image_number=(int, Field(..., ge=1, description="1-based position in the supplied image sequence")),
+        image_number=(Literal.__getitem__(tuple(range(1, len(inp.images) + 1))),
+                      Field(..., description="1-based position in the supplied image sequence")),
         variant_labels=(list[str], Field(..., description="Labels for every visible listing variant in this image; [] if none")),
         product_match=(Literal["matched", "uncertain", "mismatch", "no_product"], ...),
         quality=(Literal["usable", "limited", "unusable"], ...),
@@ -57,7 +59,10 @@ def build_output_model(inp: ImagePickerInput):
     return create_model(
         "ModelImagePickerResponse", __base__=Contract,
         __validators__={"consistent": model_validator(mode="after")(lambda result: validate_model_response(inp, result))},
-        assessments=(list[assessment], ...),
+        assessments=(list[assessment], Field(
+            ..., min_length=len(inp.images), max_length=len(inp.images),
+            description="Exactly one assessment for each supplied image, in input order",
+        )),
         variants=(list[variant], ...),
         selected_variant_label=(str | None, ...),
         selected_references=(list[reference], ...),
@@ -207,6 +212,12 @@ def to_public_result(inp: ImagePickerInput, raw):
     """Validate the model payload and deterministically map labels to API variant IDs."""
     response_model = build_output_model(inp)
     source = raw.model_dump() if isinstance(raw, BaseModel) else raw
+    if inp.business_unit.casefold() == "bgm" and inp.cms_vertical.casefold() == "chocolate":
+        source = deepcopy(source)
+        for assessment in source.get("assessments", []):
+            if assessment.get("tags", {}).get("logo") is False:
+                assessment["evidence"] = [item for item in assessment.get("evidence", [])
+                                          if item.get("tag") != "logo"]
     model = response_model.model_validate(source)
     labels = []
     for row in model.assessments:

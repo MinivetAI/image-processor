@@ -1,5 +1,6 @@
 {
   "cms_vertical": "chocolate",
+  "assessment_instructions": "Chocolate-only policy: A logo is only a distinct, recognizable brand symbol or wordmark visibly used as branding. Do not mark ordinary wording as a logo just because it contains a brand or seller name. In particular, text inside an ingredient/product infographic, ingredients or flavour copy, nutrition information, manufacturer/importer details, product claims, or a small information block is not a logo unless a separate, unmistakable logo mark is visible. When the only evidence is such text, set logo=false, omit logo from evidence, and do not select that image for the logo role. Variant labels identify different listed chocolate products, not different presentation states of the same product. A sealed package, its opened wrapper or bar, and close-up or unwrapped views of its chocolate contents are the same variant when they show the same listed product. The tags open_packaging, contents_visible, and texture_detail describe an image; they must never by themselves cause a variant split. Keep these views together unless visible evidence shows a genuinely different listed product or variant, such as a different flavour, chocolate type, or pack size. When selecting references for one packaged-chocolate variant, include a clear package-front image and, when available and clearly attributable to that same variant, a complementary, nonredundant image showing its actual open or unwrapped chocolate contents or texture. Select a role only when the image itself supports it; do not infer evidence from captions or infographic copy.",
   "tags": [
     {
       "tag": "front_view",
@@ -7,7 +8,7 @@
     },
     {
       "tag": "logo",
-      "description": "Identify a visible brand mark on the actual product or packaging; exclude watermarks, promotional overlays and branding on unrelated props."
+      "description": "Set true only for a clearly identifiable brand logo or wordmark visibly presented as branding on the actual product or its packaging. Readable text alone is not a logo: ingredient lists, product or flavour names, ingredient/feature infographic copy, manufacturer/importer details, nutrition panels, generic claims and decorative lettering do not count unless the text itself is unmistakably styled as a separate brand mark. If only small manufacturer or infographic text is visible, set false. Do not count watermarks, promotional overlays or marks on unrelated props."
     },
     {
       "tag": "human_interaction",

@@ -9,7 +9,6 @@ import time
 from .image_picker import ImagePickerInput, build_output_model, run_image_picker
 from .image_picker.instructions import build_instruction
 from .image_picker.outputs import to_public_result
-from .image_picker.tasks import ModelResponseError
 from .server.alfred import build_server, client_session
 
 
@@ -57,7 +56,8 @@ def main():
                 raise ValueError("validate requires --response")
             raw = json.loads(args.response.read_text(encoding="utf-8"))
             result = to_public_result(inp, raw)
-            value = {"product_id": inp.product_id, "result": result.model_dump(), "inference": {"model": "saved-response", "usage": {}}}
+            value = {"product_id": inp.product_id, "result": result.model_dump(),
+                     "processing_status": "complete", "inference": {"model": "saved-response", "usage": {}}}
         else:
             if not args.base_url or not args.model:
                 raise ValueError("run requires --base-url and --model (or IMAGE_PICKER_LLM_URL/MODEL)")
@@ -69,22 +69,27 @@ def main():
                     return await run_image_picker(payload, server, extra=extra, **kwargs)
 
             value = asyncio.run(execute())
-            calls = 1
+            attempt_diagnostics = value.pop("attempt_diagnostics", [])
+            if attempt_diagnostics:
+                write_json(args.output / "attempt-diagnostics.json", attempt_diagnostics)
             envelope = value.pop("raw_response")
-            write_json(args.output / "response-envelope.json", envelope)
-            write_json(args.output / "raw-response.json", json.loads(envelope["choices"][0]["message"]["content"]))
+            calls = (1 if envelope else 0) + len(attempt_diagnostics)
+            if envelope:
+                write_json(args.output / "response-envelope.json", envelope)
+                raw_content = envelope.get("choices", [{}])[0].get("message", {}).get("content")
+                try:
+                    write_json(args.output / "raw-response.json", json.loads(raw_content))
+                except (TypeError, json.JSONDecodeError):
+                    (args.output / "raw-response.txt").write_text(str(raw_content or ""), encoding="utf-8")
             write_json(args.output / "usage.json", value["inference"])
 
         write_json(args.output / "result.json", value)
-        write_json(args.output / "run.json", {"mode": args.mode, "status": "validated",
+        write_json(args.output / "run.json", {"mode": args.mode, "status": value.get("processing_status", "complete"),
                    "llm_calls": calls, "seconds": round(time.monotonic() - started, 3)})
-        print(f"Validated {len(value['result']['assessments'])} images; selected "
+        print(f"{value.get('processing_status', 'complete').capitalize()}: "
+              f"{len(value['result']['assessments'])} images; selected "
               f"{len(value['result']['selected_references'])} references; LLM calls: {calls}")
     except Exception as error:
-        if isinstance(error, ModelResponseError):
-            write_json(args.output / "response-envelope.json", error.envelope)
-            if error.content is not None:
-                (args.output / "raw-response.txt").write_text(str(error.content), encoding="utf-8")
         write_json(args.output / "run.json", {"mode": args.mode, "status": "failed",
                    "llm_calls": None if args.mode == "run" else 0, "seconds": round(time.monotonic() - started, 3),
                    "error_type": type(error).__name__, "error": str(error)})

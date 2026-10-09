@@ -47,7 +47,11 @@ to the service. Before inference, the service decodes each source, resizes it wi
 300×400-pixel box, and sends a JPEG data URI to the model. Only image numbers and short
 variant labels appear in the model-facing response contract; Python maps those back to the
 request's original image IDs and derives reciprocal variant membership. The public result
-still contains `product_id`, validated `result`, and inference model/usage metadata.
+contains `product_id`, `processing_status`, validated `result`, and inference model/usage
+metadata. Invalid model output gets one corrective request; if it remains invalid, the API
+returns a degraded result with unknown tags and no selected references. Raw rejected model
+responses are written locally under `/tmp/image-processor-diagnostics` by default; set
+`IMAGE_PROCESSOR_DIAGNOSTICS_DIR` to choose another location.
 `GET /healthz` reports the configured model.
 
 Open `/review` for the human review page. Load a JSON array, a `{ "cases": [...] }`
@@ -160,20 +164,19 @@ finally:
     await server.close()
 ```
 
-The integration calls `LLMServer.respond` directly with the generated Pydantic guide. Retries,
-redirects and repair calls are disabled. Truncated, malformed or inconsistent output
-fails instead of triggering another inference. Provider extras cannot override the
-messages, schema or response mode. Token budget grows with image/field count and can be
+The integration calls `LLMServer.respond` directly with the generated Pydantic guide. It
+allows one corrective request for truncated, malformed or inconsistent model output;
+transport retries and redirect following remain disabled. Provider extras cannot override
+the messages, schema or response mode. Token budget grows with image/field count and can be
 overridden with `--max-tokens`; backend context/output limits still apply. Start with
 3–6 images before trying the 32-image maximum.
 
-The CLI saves input, schema and shared instructions, plus validated output, raw response,
-model, usage and timing on success. When a model response is incomplete or fails validation,
-the CLI also saves its raw envelope and content for diagnosis. Use a fresh output directory
-per run. Artifacts are ignored by Git. No API keys are saved.
+The CLI saves input, schema and shared instructions, plus output, raw response, model, usage
+and timing. Corrective attempts are saved with their validation reasons. Use a fresh output
+directory per run. Artifacts are ignored by Git. No API keys are saved.
 
 Tests cover definition validation, all archived field sets, custom types, selection
-consistency, real local HTTP requests, CLI artifacts and the one-call failure boundary.
+consistency, real local HTTP requests, CLI artifacts, bounded correction and safe fallback.
 Visual quality still needs a live run with real listing images and human review. Check
 variant identity, duplicate judgments, useful role coverage, visual attribution, latency
 and token usage before connecting recipe generation.

@@ -6,9 +6,9 @@ import os
 from pathlib import Path
 import time
 
-from alfred import LLMServer
 from image_picker import ImagePickerInput, build_output_model, run_image_picker
 from image_picker.instructions import build_instruction
+from server.alfred import build_server, client_session
 
 
 def write_json(path, value):
@@ -59,16 +59,12 @@ def main():
         else:
             if not args.base_url or not args.model:
                 raise ValueError("run requires --base-url and --model (or IMAGE_PICKER_LLM_URL/MODEL)")
-            server = LLMServer(args.base_url, args.model,
-                api_key=os.environ.get("IMAGE_PICKER_LLM_API_KEY"), timeout=args.timeout,
-                temperature=0, retries=0)
+            server = build_server(args.base_url, args.model, timeout=args.timeout)
             extra = {"chat_template_kwargs": {"enable_thinking": False}} if args.disable_thinking else None
 
             async def execute():
-                try:
+                async with client_session(server):
                     return await run_image_picker(payload, server, extra=extra, **kwargs)
-                finally:
-                    await server.close()
 
             value = asyncio.run(execute())
             calls = 1

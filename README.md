@@ -8,14 +8,16 @@ for one product variant. The assessment definition comes in the request. No cate
 lookup or category-specific Python is required. Recipe generation can consume the stable
 image IDs, variant grouping, reference roles, evidence and limitations in a separate call.
 
-The four task files have distinct jobs:
+The modules have distinct jobs:
 
 | File | Responsibility |
 | --- | --- |
 | `image_picker/inputs.py` | Validate product, images, requested fields and optional instructions |
 | `image_picker/outputs.py` | Build the requested output model and validate selection relationships |
 | `image_picker/instructions.py` | Shared policy plus caller-supplied assessment instructions |
-| `image_picker/tasks.py` | Assemble the images, call Alfred once and validate the response |
+| `image_picker/tasks.py` | Prepare the assessment context and validate the model result |
+| `server/alfred.py` | Create/close the client, build image messages and call Alfred once |
+| `controllers/` | Expose health and picker HTTP endpoints |
 
 There is no specifications file, custom LLM client, registry, or prepared-task wrapper.
 The caller supplies and closes Alfred's `LLMServer`; configuration stays outside the task.
@@ -23,8 +25,14 @@ Existing production tasks and their runner are untouched.
 
 ## HTTP service
 
-`app.py` follows the Minivet agent-service layout: it owns one shared Alfred
-client and exposes a typed FastAPI endpoint. It is an API service, not a web UI.
+`app.py` wires the application together. HTTP routes live in `controllers/`,
+and Alfred setup, cleanup and requests live in `server/alfred.py`. The API and CLI
+share this integration, while `image_picker/` owns schemas, tag resolution and
+result validation. One Alfred client is shared across HTTP requests.
+
+```text
+controllers/ → image_picker/ → server/alfred.py → VLM
+```
 
 ```sh
 export IMAGE_PICKER_LLM_URL='http://YOUR-ENDPOINT/v1'
@@ -98,7 +106,8 @@ Use Python 3.11 or newer. From this directory:
 ```sh
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m unittest test_picker -v
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m unittest discover -v
 .venv/bin/python generate_examples.py
 .venv/bin/python run.py prepare examples/custom-bottle.input.json --output runs/bottle-prepared
 .venv/bin/python run.py validate examples/custom-bottle.input.json --response examples/custom-bottle.response.json --output runs/bottle-validation
@@ -136,7 +145,7 @@ finally:
     await server.close()
 ```
 
-The task calls `LLMServer.respond` directly with the generated Pydantic guide. Retries,
+The integration calls `LLMServer.respond` directly with the generated Pydantic guide. Retries,
 redirects and repair calls are disabled. Truncated, malformed or inconsistent output
 fails instead of triggering another inference. Provider extras cannot override the
 messages, schema or response mode. Token budget grows with image/field count and can be

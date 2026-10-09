@@ -3,10 +3,11 @@ import argparse
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 
-from alfred import LLMServer
-from image_picker import ImagePickerInput, run_image_picker
+from controllers.health import router as health_router
+from controllers.image_picker import router as picker_router
+from server.alfred import LLMServer, build_server, client_session
 
 
 DEFAULT_HOST = "0.0.0.0"
@@ -43,28 +44,13 @@ def parse_args():
     return parser.parse_args()
 
 
-def build_server(base_url: str, model: str, *, timeout: float, max_concurrent: int) -> LLMServer:
-    if not base_url or not model:
-        raise ValueError("--vllm-url and --model are required (or set IMAGE_PICKER_LLM_URL/MODEL)")
-    return LLMServer(
-        base_url=base_url,
-        model=model,
-        api_key=_env("IMAGE_PICKER_LLM_API_KEY"),
-        timeout=timeout,
-        max_concurrent=max_concurrent,
-        retries=0,
-    )
-
-
 def create_app(server: LLMServer, *, disable_thinking: bool = False) -> FastAPI:
     """Create the API around one shared Alfred client."""
 
     @asynccontextmanager
     async def lifespan(_: FastAPI):
-        try:
+        async with client_session(server):
             yield
-        finally:
-            await server.close()
 
     app = FastAPI(
         title="Image Processor",
@@ -72,20 +58,10 @@ def create_app(server: LLMServer, *, disable_thinking: bool = False) -> FastAPI:
         version="1.0.0",
         lifespan=lifespan,
     )
-    extra = {"chat_template_kwargs": {"enable_thinking": False}} if disable_thinking else None
-
-    @app.get("/healthz")
-    async def healthz():
-        return {"status": "ok", "model": server.model}
-
-    @app.post("/v1/image-processor/pick")
-    async def pick_image_references(payload: ImagePickerInput):
-        try:
-            result = await run_image_picker(payload.model_dump(), server, extra=extra)
-        except Exception as error:
-            raise HTTPException(status_code=502, detail=f"Image processor inference failed: {error}") from error
-        result.pop("raw_response", None)
-        return result
+    app.state.server = server
+    app.state.extra = {"chat_template_kwargs": {"enable_thinking": False}} if disable_thinking else None
+    app.include_router(health_router)
+    app.include_router(picker_router)
 
     return app
 

@@ -13,9 +13,10 @@ Application code lives under `src/image_processor/`. The modules have distinct j
 | File | Responsibility |
 | --- | --- |
 | `image_picker/inputs.py` | Validate product, images, requested fields and optional instructions |
-| `image_picker/outputs.py` | Build the requested output model and validate selection relationships |
+| `image_picker/media.py` | Fetch, validate, resize to at most 300×400 and JPEG-compress images |
+| `image_picker/outputs.py` | Validate model labels and map them back to the stable API response |
 | `image_picker/instructions.py` | Shared policy plus caller-supplied assessment instructions |
-| `image_picker/tasks.py` | Prepare the assessment context and validate the model result |
+| `image_picker/tasks.py` | Prepare the numbered assessment context and validate the model result |
 | `server/alfred.py` | Create/close the client, build image messages and call Alfred once |
 | `controllers/` | Expose health and picker HTTP endpoints |
 
@@ -42,8 +43,21 @@ PYTHONPATH=src .venv/bin/python -m image_processor.app --disable-thinking --port
 
 Call `POST /v1/image-processor/pick` with the same JSON contract accepted by
 `image_processor.cli`; image `source` values may be HTTP URLs, data URIs, or paths accessible
-to the service. The result contains `product_id`, validated `result`, and
-inference model/usage metadata. `GET /healthz` reports the configured model.
+to the service. Before inference, the service decodes each source, resizes it within a
+300×400-pixel box, and sends a JPEG data URI to the model. Only image numbers and short
+variant labels appear in the model-facing response contract; Python maps those back to the
+request's original image IDs and derives reciprocal variant membership. The public result
+still contains `product_id`, validated `result`, and inference model/usage metadata.
+`GET /healthz` reports the configured model.
+
+Open `/review` for the human review page. Load a JSON array, a `{ "cases": [...] }`
+document, or JSONL file. Each case can be a picker request directly or wrap it in
+`request`, with optional `case_id`, `batch`, and `created` display fields. The page runs
+only the current case when asked, displays every image assessment and selected reference,
+and lets the reviewer mark it correct or wrong with a note. Decisions are saved in the
+browser; use **Export review JSON** to save model results and decisions together.
+The old 300-case Lifestyle dataset is not included in this repository, so provide its
+requests as the review file. Image URLs must be loadable by both the browser and API server.
 
 ## Request definitions
 
@@ -154,9 +168,9 @@ overridden with `--max-tokens`; backend context/output limits still apply. Start
 3–6 images before trying the 32-image maximum.
 
 The CLI saves input, schema and shared instructions, plus validated output, raw response,
-model, usage and timing on success. Failed inference runs record the error and an unknown
-call count; raw envelopes from failed validation are not retained. Use a fresh output
-directory per run. Artifacts are ignored by Git. No API keys are saved.
+model, usage and timing on success. When a model response is incomplete or fails validation,
+the CLI also saves its raw envelope and content for diagnosis. Use a fresh output directory
+per run. Artifacts are ignored by Git. No API keys are saved.
 
 Tests cover definition validation, all archived field sets, custom types, selection
 consistency, real local HTTP requests, CLI artifacts and the one-call failure boundary.

@@ -1,9 +1,9 @@
 {
   "assessments": [
     {
-      "image_id": "img-01",
-      "variant_ids": [
-        "V1"
+      "image_number": 1,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
@@ -40,9 +40,9 @@
       "limitations": []
     },
     {
-      "image_id": "img-02",
-      "variant_ids": [
-        "V1"
+      "image_number": 2,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
@@ -79,9 +79,9 @@
       "limitations": []
     },
     {
-      "image_id": "img-03",
-      "variant_ids": [
-        "V1"
+      "image_number": 3,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
@@ -124,13 +124,13 @@
       "limitations": []
     },
     {
-      "image_id": "img-04",
-      "variant_ids": [
-        "V1"
+      "image_number": 4,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
-      "duplicate_of": "img-01",
+      "duplicate_of": 1,
       "tags": {
         "front_view": true,
         "logo": false,
@@ -159,20 +159,14 @@
   ],
   "variants": [
     {
-      "variant_id": "V1",
-      "description": "Blue backpack with pictured front logo and side zipper",
-      "image_ids": [
-        "img-01",
-        "img-02",
-        "img-03",
-        "img-04"
-      ]
+      "label": "A",
+      "description": "Blue backpack with pictured front logo and side zipper"
     }
   ],
-  "selected_variant_id": "V1",
+  "selected_variant_label": "A",
   "selected_references": [
     {
-      "image_id": "img-01",
+      "image_number": 1,
       "roles": [
         "front_view",
         "logo"
@@ -180,7 +174,7 @@
       "reason": "Clear overall design and branding."
     },
     {
-      "image_id": "img-02",
+      "image_number": 2,
       "roles": [
         "side_view",
         "closure_detail"
@@ -188,7 +182,7 @@
       "reason": "Complementary profile and zipper evidence."
     },
     {
-      "image_id": "img-03",
+      "image_number": 3,
       "roles": [
         "back_view",
         "human_interaction",

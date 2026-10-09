@@ -1,9 +1,9 @@
 {
   "assessments": [
     {
-      "image_id": "img-01",
-      "variant_ids": [
-        "V1"
+      "image_number": 1,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
@@ -39,9 +39,9 @@
       "limitations": []
     },
     {
-      "image_id": "img-02",
-      "variant_ids": [
-        "V1"
+      "image_number": 2,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "usable",
@@ -83,8 +83,8 @@
       "limitations": []
     },
     {
-      "image_id": "img-03",
-      "variant_ids": [],
+      "image_number": 3,
+      "variant_labels": [],
       "product_match": "uncertain",
       "quality": "usable",
       "duplicate_of": null,
@@ -117,18 +117,14 @@
   ],
   "variants": [
     {
-      "variant_id": "V1",
-      "description": "Pictured red lipstick tube and matching exposed bullet",
-      "image_ids": [
-        "img-01",
-        "img-02"
-      ]
+      "label": "A",
+      "description": "Pictured red lipstick tube and matching exposed bullet"
     }
   ],
-  "selected_variant_id": "V1",
+  "selected_variant_label": "A",
   "selected_references": [
     {
-      "image_id": "img-01",
+      "image_number": 1,
       "roles": [
         "front_view",
         "logo"
@@ -136,7 +132,7 @@
       "reason": "Identifiable product and branding."
     },
     {
-      "image_id": "img-02",
+      "image_number": 2,
       "roles": [
         "contents_visible",
         "open_lid_cap",

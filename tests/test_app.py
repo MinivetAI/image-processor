@@ -1,14 +1,26 @@
 import unittest
 from copy import deepcopy
+import base64
 import json
+from io import BytesIO
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
+from PIL import Image
 
 from fastapi.testclient import TestClient
 
 from image_processor.app import create_app
 from image_processor.server.alfred import build_server
-from scripts.generate_examples import examples
+from scripts.generate_examples import examples, model_response
+from image_processor.image_picker.inputs import ImagePickerInput
+from image_processor.image_picker.outputs import to_public_result
+
+
+def sample_image_uri():
+    image = Image.new("RGB", (32, 48), "navy")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 
 class AppTests(unittest.TestCase):
@@ -22,9 +34,9 @@ class AppTests(unittest.TestCase):
         server = build_server("http://unused/v1", "fixture", timeout=1)
         cases = list(examples())
         envelopes = [
-            {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(result)}}],
+            {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(model_response(payload, result))}}],
              "model": "fixture", "usage": {"completion_tokens": 123}}
-            for _, _, result in cases
+            for _, payload, result in cases
         ]
         with patch.object(server, "respond", new=AsyncMock(side_effect=envelopes)) as respond:
             with patch.object(server, "close", new=AsyncMock()) as close:
@@ -34,11 +46,12 @@ class AppTests(unittest.TestCase):
                     for name, payload, result in cases:
                         payload = deepcopy(payload)
                         for image in payload["images"]:
-                            image["source"] = "data:image/png;base64,AA=="
+                            image["source"] = sample_image_uri()
                         response = client.post("/v1/image-processor/pick", json=payload)
                         self.assertEqual(response.status_code, 200, name + response.text)
+                        public = to_public_result(ImagePickerInput.model_validate(payload), model_response(payload, result)).model_dump()
                         self.assertEqual(response.json(), {
-                            "product_id": payload["product_id"], "result": result,
+                            "product_id": payload["product_id"], "result": public,
                             "inference": {"model": "fixture", "usage": {"completion_tokens": 123}},
                         })
                     self.assertEqual(respond.await_count, 3)
@@ -51,14 +64,14 @@ class AppTests(unittest.TestCase):
         _, payload, result = next(examples())
         del payload["assessment_definition"]
         for image in payload["images"]:
-            image["source"] = "data:image/png;base64,AA=="
+            image["source"] = sample_image_uri()
         server = build_server("http://unused/v1", "fixture", timeout=1)
-        envelope = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(result)}}]}
+        envelope = {"choices": [{"finish_reason": "stop", "message": {"content": json.dumps(model_response(payload, result))}}]}
         with patch.object(server, "respond", new=AsyncMock(return_value=envelope)) as respond:
             with TestClient(create_app(server)) as client:
                 response = client.post("/v1/image-processor/pick", json=payload)
                 self.assertEqual(response.status_code, 200, response.text)
-                self.assertEqual(response.json()["result"], result)
+                self.assertEqual(response.json()["result"], to_public_result(ImagePickerInput.model_validate(payload), model_response(payload, result)).model_dump())
                 respond.assert_awaited_once()
                 fields = respond.call_args.kwargs["guide"].model_json_schema()["$defs"]["ProductTags"]["properties"]
                 self.assertIn("carried_or_worn", fields)

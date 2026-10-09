@@ -7,6 +7,7 @@ from fastapi import FastAPI
 
 from .controllers.health import router as health_router
 from .controllers.image_picker import router as picker_router
+from .controllers.review import router as review_router
 from .server.alfred import LLMServer, build_server, client_session
 
 
@@ -62,6 +63,7 @@ def create_app(server: LLMServer, *, disable_thinking: bool = False) -> FastAPI:
     app.state.extra = {"chat_template_kwargs": {"enable_thinking": False}} if disable_thinking else None
     app.include_router(health_router)
     app.include_router(picker_router)
+    app.include_router(review_router)
 
     return app
 

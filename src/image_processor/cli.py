@@ -8,6 +8,8 @@ import time
 
 from .image_picker import ImagePickerInput, build_output_model, run_image_picker
 from .image_picker.instructions import build_instruction
+from .image_picker.outputs import to_public_result
+from .image_picker.tasks import ModelResponseError
 from .server.alfred import build_server, client_session
 
 
@@ -54,7 +56,7 @@ def main():
             if args.response is None:
                 raise ValueError("validate requires --response")
             raw = json.loads(args.response.read_text(encoding="utf-8"))
-            result = output.model_validate(raw)
+            result = to_public_result(inp, raw)
             value = {"product_id": inp.product_id, "result": result.model_dump(), "inference": {"model": "saved-response", "usage": {}}}
         else:
             if not args.base_url or not args.model:
@@ -79,6 +81,10 @@ def main():
         print(f"Validated {len(value['result']['assessments'])} images; selected "
               f"{len(value['result']['selected_references'])} references; LLM calls: {calls}")
     except Exception as error:
+        if isinstance(error, ModelResponseError):
+            write_json(args.output / "response-envelope.json", error.envelope)
+            if error.content is not None:
+                (args.output / "raw-response.txt").write_text(str(error.content), encoding="utf-8")
         write_json(args.output / "run.json", {"mode": args.mode, "status": "failed",
                    "llm_calls": None if args.mode == "run" else 0, "seconds": round(time.monotonic() - started, 3),
                    "error_type": type(error).__name__, "error": str(error)})

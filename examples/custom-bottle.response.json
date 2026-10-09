@@ -1,9 +1,9 @@
 {
   "assessments": [
     {
-      "image_id": "bottle-01",
-      "variant_ids": [
-        "V1"
+      "image_number": 1,
+      "variant_labels": [
+        "A"
       ],
       "product_match": "matched",
       "quality": "limited",
@@ -48,17 +48,14 @@
   ],
   "variants": [
     {
-      "variant_id": "V1",
-      "description": "Pictured printed 500 ml bottle",
-      "image_ids": [
-        "bottle-01"
-      ]
+      "label": "A",
+      "description": "Pictured printed 500 ml bottle"
     }
   ],
-  "selected_variant_id": "V1",
+  "selected_variant_label": "A",
   "selected_references": [
     {
-      "image_id": "bottle-01",
+      "image_number": 1,
       "roles": [
         "lid_design",
         "visible_text"

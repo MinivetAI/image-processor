@@ -10,15 +10,26 @@ import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import unittest
 import asyncio
+import base64
+from io import BytesIO
 from unittest.mock import AsyncMock, patch
 from alfred import LLMServer
+from PIL import Image
 
 from pydantic import ValidationError
 
-from scripts.generate_examples import examples
+from scripts.generate_examples import examples, model_response
 from image_processor.image_picker import ImagePickerInput, build_output_model, run_image_picker
+from image_processor.image_picker.outputs import to_public_result
 from image_processor.image_picker.references import REFERENCE_ROOT
 from types import SimpleNamespace
+
+
+def sample_image_uri(size=(32, 48)):
+    image = Image.new("RGB", size, "navy")
+    buffer = BytesIO()
+    image.save(buffer, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode()
 
 def prepare(payload):
     inp = ImagePickerInput.model_validate(payload)
@@ -30,10 +41,10 @@ def validate_result(prepared, raw):
 
 class PickerTests(unittest.TestCase):
     def setUp(self):
-        self.cases = {name: (payload, raw) for name, payload, raw in examples()}
+        self.cases = {name: (payload, model_response(payload, public)) for name, payload, public in examples()}
         self.payload, self.raw = deepcopy(self.cases["backpack"])
         for image in self.payload["images"]:
-            image["source"] = "data:image/png;base64,AA=="
+            image["source"] = sample_image_uri()
         self.prepared = prepare(self.payload)
 
     def reject(self, raw):
@@ -117,7 +128,7 @@ class PickerTests(unittest.TestCase):
         raw["assessments"].reverse()
         self.reject(raw)
         raw = deepcopy(self.raw)
-        raw["selected_references"][0]["image_id"] = "invented"
+        raw["selected_references"][0]["image_number"] = 99
         self.reject(raw)
 
     def test_uncertain_or_absent_role_is_not_selectable(self):
@@ -137,26 +148,48 @@ class PickerTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             prepare(payload)
         raw = deepcopy(self.raw)
-        raw["assessments"][0]["duplicate_of"] = "img-04"
+        raw["assessments"][0]["duplicate_of"] = 4
         self.reject(raw)
 
     def test_duplicate_images_cannot_be_selected(self):
         raw = deepcopy(self.raw)
-        raw["selected_references"].append({"image_id": "img-04", "roles": ["front_view"], "reason": "bad duplicate"})
+        raw["selected_references"].append({"image_number": 4, "roles": ["front_view"], "reason": "bad duplicate"})
         self.reject(raw)
 
     def test_variant_memberships_must_agree(self):
+        public = to_public_result(self.prepared.input, self.raw).model_dump()
+        self.assertEqual(public["variants"][0]["image_ids"], [
+            row["image_id"] for row in public["assessments"] if "V1" in row["variant_ids"]])
         raw = deepcopy(self.raw)
-        raw["variants"][0]["image_ids"].pop()
+        raw["assessments"][0]["variant_labels"] = ["Z"]
         self.reject(raw)
+
+    def test_images_are_resized_and_jpeg_compressed(self):
+        from image_processor.image_picker.media import prepare_images
+        source = sample_image_uri((1200, 1600))
+        compressed = asyncio.run(prepare_images([source]))[0]
+        self.assertTrue(compressed.startswith("data:image/jpeg;base64,"))
+        decoded = Image.open(BytesIO(base64.b64decode(compressed.split(",", 1)[1])))
+        self.assertLessEqual(decoded.width, 300)
+        self.assertLessEqual(decoded.height, 400)
+
+    def test_private_network_image_urls_are_rejected(self):
+        from image_processor.image_picker.media import prepare_images
+        with self.assertRaisesRegex(ValueError, "public IP"):
+            asyncio.run(prepare_images(["http://127.0.0.1/internal.png"]))
 
     def test_empty_selection_has_no_false_winner(self):
         raw = deepcopy(self.raw)
         raw["selected_references"] = []
         self.reject(raw)
-        raw["selected_variant_id"] = None
+        raw["selected_variant_label"] = None
         raw["unresolved"] = ["No suitable references for requested purpose."]
-        self.assertIsNone(validate_result(self.prepared, raw).selected_variant_id)
+        raw["variants"] = []
+        for assessment in raw["assessments"]:
+            assessment["variant_labels"] = []
+            assessment["product_match"] = "no_product"
+            assessment["quality"] = "unusable"
+        self.assertIsNone(validate_result(self.prepared, raw).selected_variant_label)
 
     def test_reference_limit_is_explicit_and_enforced(self):
         prepared = prepare({**self.payload, "max_references": 2})
@@ -251,7 +284,10 @@ class PickerTests(unittest.TestCase):
             self.assertTrue(messages[0]["content"].startswith(IMAGE_PICKER))
             context = json.loads(messages[1]["content"][0]["text"])
             self.assertNotIn("assessment_instructions", context)
-            self.assertEqual(result["result"], self.raw)
+            self.assertNotIn("product_id", context)
+            self.assertEqual(context["images"], [{"image_number": n} for n in range(1, 5)])
+            self.assertNotIn("img-01", json.dumps(messages[1]["content"]))
+            self.assertEqual(result["result"], to_public_result(self.prepared.input, self.raw).model_dump())
 
     def test_invalid_loaded_instructions_fail_before_inference(self):
         server = LLMServer("http://unused/v1", "fixture", retries=0)
@@ -307,7 +343,7 @@ class PickerTests(unittest.TestCase):
             with patch.object(LLMServer, "respond", autospec=True, side_effect=LLMServer.respond) as respond:
                 response = asyncio.run(execute())
                 self.assertEqual(respond.call_count, 1)
-            self.assertEqual(response["result"], self.raw)
+            self.assertEqual(response["result"], to_public_result(self.prepared.input, self.raw).model_dump())
             self.assertEqual(response["inference"]["usage"], {"completion_tokens": 123})
             self.assertEqual(Handler.calls, 1)
             Handler.finish_reason = "length"

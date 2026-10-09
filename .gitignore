@@ -1,5 +1,9 @@
 .venv/
 runs/
+test_runs/
+outputs/
+review-data/
+review_data/
 src/image_processor/reference/image_tags.zip
 __pycache__/
 *.py[cod]

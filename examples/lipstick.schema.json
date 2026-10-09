@@ -64,16 +64,18 @@
     "ImageAssessment": {
       "additionalProperties": false,
       "properties": {
-        "image_id": {
-          "title": "Image Id",
-          "type": "string"
+        "image_number": {
+          "description": "1-based position in the supplied image sequence",
+          "minimum": 1,
+          "title": "Image Number",
+          "type": "integer"
         },
-        "variant_ids": {
-          "description": "All visibly supported listing variants; [] if none",
+        "variant_labels": {
+          "description": "Labels for every visible listing variant in this image; [] if none",
           "items": {
             "type": "string"
           },
-          "title": "Variant Ids",
+          "title": "Variant Labels",
           "type": "array"
         },
         "product_match": {
@@ -98,13 +100,13 @@
         "duplicate_of": {
           "anyOf": [
             {
-              "type": "string"
+              "type": "integer"
             },
             {
               "type": "null"
             }
           ],
-          "description": "Earlier image ID only for a redundant view; null otherwise",
+          "description": "Earlier image number only for a redundant view; null otherwise",
           "title": "Duplicate Of"
         },
         "tags": {
@@ -127,8 +129,8 @@
         }
       },
       "required": [
-        "image_id",
-        "variant_ids",
+        "image_number",
+        "variant_labels",
         "product_match",
         "quality",
         "duplicate_of",
@@ -307,9 +309,10 @@
     "SelectedReference": {
       "additionalProperties": false,
       "properties": {
-        "image_id": {
-          "title": "Image Id",
-          "type": "string"
+        "image_number": {
+          "minimum": 1,
+          "title": "Image Number",
+          "type": "integer"
         },
         "roles": {
           "description": "Supported non-null observations assigned to this reference",
@@ -339,38 +342,31 @@
         }
       },
       "required": [
-        "image_id",
+        "image_number",
         "roles",
         "reason"
       ],
       "title": "SelectedReference",
       "type": "object"
     },
-    "Variant": {
+    "VariantLabel": {
       "additionalProperties": false,
       "properties": {
-        "variant_id": {
-          "title": "Variant Id",
+        "label": {
+          "description": "Short label such as A or B, assigned by first appearance",
+          "title": "Label",
           "type": "string"
         },
         "description": {
           "title": "Description",
           "type": "string"
-        },
-        "image_ids": {
-          "items": {
-            "type": "string"
-          },
-          "title": "Image Ids",
-          "type": "array"
         }
       },
       "required": [
-        "variant_id",
-        "description",
-        "image_ids"
+        "label",
+        "description"
       ],
-      "title": "Variant",
+      "title": "VariantLabel",
       "type": "object"
     }
   },
@@ -385,12 +381,12 @@
     },
     "variants": {
       "items": {
-        "$ref": "#/$defs/Variant"
+        "$ref": "#/$defs/VariantLabel"
       },
       "title": "Variants",
       "type": "array"
     },
-    "selected_variant_id": {
+    "selected_variant_label": {
       "anyOf": [
         {
           "type": "string"
@@ -399,7 +395,7 @@
           "type": "null"
         }
       ],
-      "title": "Selected Variant Id"
+      "title": "Selected Variant Label"
     },
     "selected_references": {
       "items": {
@@ -419,10 +415,10 @@
   "required": [
     "assessments",
     "variants",
-    "selected_variant_id",
+    "selected_variant_label",
     "selected_references",
     "unresolved"
   ],
-  "title": "ImagePickerResult",
+  "title": "ModelImagePickerResponse",
   "type": "object"
 }

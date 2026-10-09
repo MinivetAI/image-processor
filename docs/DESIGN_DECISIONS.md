@@ -120,6 +120,10 @@ The common result contains `assessments`, `variants`, `selected_variant_id`,
 
 Original image IDs survive grouping and selection. A reference can have several roles;
 a collage or a useful human interaction should not be forced into a single angle label.
+The model sees only 1-based image numbers and short variant labels. Python maps those
+labels back to request IDs and constructs variant memberships, avoiding duplicated,
+model-authored ID lists. Before inference, each image is decoded and JPEG-compressed to fit
+inside a 300×400-pixel box; the original source URL is not included in the model context.
 Evidence distinguishes actual product, actual contents, packaging depiction, application
 result, human contact, scene and unclear support. Limitations retain uncertainty for the
 next task. A recipe should not treat a packaging illustration as actual exposed contents

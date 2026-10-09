@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from image_processor.image_picker import ImagePickerInput, build_output_model
+from image_processor.image_picker.outputs import to_public_result
 from image_processor.image_picker.instructions import build_instruction
 from image_processor.image_picker.references import REFERENCE_ROOT
 
@@ -104,12 +105,37 @@ def examples():
         "reason": "Visible cap mechanism and label; opening remains uncertain."}], "unresolved": ["Drinking opening is obscured."]}
 
 
+def model_response(payload, public):
+    """Translate the illustrative public fixture into the compact model contract."""
+    image_number = {image["image_id"]: number for number, image in enumerate(payload["images"], 1)}
+    label_for_id = {variant["variant_id"]: chr(ord("A") + index)
+                    for index, variant in enumerate(public["variants"])}
+    return {
+        "assessments": [{
+            "image_number": image_number[row["image_id"]],
+            "variant_labels": [label_for_id[value] for value in row["variant_ids"]],
+            "product_match": row["product_match"], "quality": row["quality"],
+            "duplicate_of": image_number[row["duplicate_of"]] if row["duplicate_of"] else None,
+            "tags": row["tags"], "evidence": row["evidence"], "limitations": row["limitations"],
+        } for row in public["assessments"]],
+        "variants": [{"label": label_for_id[item["variant_id"]], "description": item["description"]}
+                     for item in public["variants"]],
+        "selected_variant_label": label_for_id.get(public["selected_variant_id"]),
+        "selected_references": [{"image_number": image_number[item["image_id"]],
+                                  "roles": item["roles"], "reason": item["reason"]}
+                                 for item in public["selected_references"]],
+        "unresolved": public["unresolved"],
+    }
+
+
 def main():
     target = ROOT / "examples"
     target.mkdir(exist_ok=True)
-    for name, payload, raw in examples():
-        output = build_output_model(ImagePickerInput.model_validate(payload))
-        result = output.model_validate(raw)
+    for name, payload, public in examples():
+        inp = ImagePickerInput.model_validate(payload)
+        output = build_output_model(inp)
+        raw = model_response(payload, public)
+        result = to_public_result(inp, output.model_validate(raw))
         artifacts = {"input": payload, "response": raw, "schema": output.model_json_schema(),
             "output": {"example_kind": "illustrative_fixture_not_model_output", "llm_calls": 0,
                        "product_id": payload["product_id"],

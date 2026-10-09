@@ -38,6 +38,10 @@
       "description": "Identify a served/prepared form attributable to the catalog food, even without its pack; unrelated dishes and packaging-only serving artwork do not qualify."
     },
     {
+      "tag": "baking",
+      "description": "Identify the chocolate visibly used in baking or dessert preparation, such as being melted, mixed, grated or incorporated into a baked item; packaging artwork or an unrelated dessert does not qualify."
+    },
+    {
       "tag": "multi_pack",
       "description": "Identify separate products of the same kind shown as a catalog assortment, including variants; exclude repeated views of one item, unrelated props and packaging art mistaken for units."
     },

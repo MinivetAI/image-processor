@@ -106,6 +106,13 @@ class PickerTests(unittest.TestCase):
         self.assertEqual(tags["required"], ["custom_flag"])
         self.assertNotIn("front_view", tags["properties"])
 
+    def test_chocolate_reference_includes_baking_tag(self):
+        payload = {**self.payload, "business_unit": "BGM", "cms_vertical": "chocolate"}
+        del payload["assessment_definition"]
+        tags = prepare(payload).output_model.model_json_schema()["$defs"]["ProductTags"]
+        self.assertIn("baking", tags["required"])
+        self.assertIn("baking", tags["properties"])
+
     def test_custom_category_requires_a_client_definition(self):
         payload = {**self.payload, "business_unit": "Custom", "cms_vertical": "New Category"}
         del payload["assessment_definition"]

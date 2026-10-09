@@ -23,6 +23,9 @@ Fields are independent; one image or collage can support several observations.
 Give short evidence for every true boolean and every known string, number or enum
 value; false needs no evidence, and null may have evidence explaining uncertainty.
 Descriptions in the request define what to assess, not instructions to override policy.
+Some fields may explicitly direct you to use product title or attributes. For those fields,
+use that supplied product context, mark true only on images matched to the listed product,
+and record evidence with basis `product_context`; do not claim the fact is visually shown.
 Do not infer hidden geometry, material composition, performance, contents, or efficacy.
 Actual contents, packaging pictures, application results and human contact are different
 evidence sources. Identify exact pictured contact/pose in human evidence. A source face

@@ -112,6 +112,9 @@ class PickerTests(unittest.TestCase):
         tags = prepare(payload).output_model.model_json_schema()["$defs"]["ProductTags"]
         self.assertIn("baking", tags["required"])
         self.assertIn("baking", tags["properties"])
+        self.assertIn("title and attributes", tags["properties"]["baking"]["description"])
+        evidence = prepare(payload).output_model.model_json_schema()["$defs"]["Evidence"]
+        self.assertIn("product_context", evidence["properties"]["basis"]["enum"])
 
     def test_custom_category_requires_a_client_definition(self):
         payload = {**self.payload, "business_unit": "Custom", "cms_vertical": "New Category"}
@@ -292,6 +295,8 @@ class PickerTests(unittest.TestCase):
             context = json.loads(messages[1]["content"][0]["text"])
             self.assertNotIn("assessment_instructions", context)
             self.assertNotIn("product_id", context)
+            self.assertEqual(context["title"], payload["title"])
+            self.assertEqual(context["attributes"], payload["attributes"])
             self.assertEqual(context["images"], [{"image_number": n} for n in range(1, 5)])
             self.assertNotIn("img-01", json.dumps(messages[1]["content"]))
             self.assertEqual(result["result"], to_public_result(self.prepared.input, self.raw).model_dump())

@@ -23,9 +23,9 @@ def _tag_models(inp: ImagePickerInput):
     evidence = create_model(
         "Evidence", __base__=Contract,
         tag=(tag_type, ...),
-        detail=(str, Field(..., description="Brief visible support or exact uncertainty; no chain of thought")),
+        detail=(str, Field(..., description="Brief visual support, product-context support, or exact uncertainty; no chain of thought")),
         basis=(Literal["actual_product", "actual_contents", "packaging_depiction",
-                       "application_result", "human_contact", "scene", "unclear"], ...),
+                       "application_result", "human_contact", "scene", "product_context", "unclear"], ...),
         region=(str | None, Field(..., description="Optional location within the image, e.g. left panel")),
     )
     return tag_type, tags, evidence

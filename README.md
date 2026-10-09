@@ -21,6 +21,22 @@ There is no specifications file, custom LLM client, registry, or prepared-task w
 The caller supplies and closes Alfred's `LLMServer`; configuration stays outside the task.
 Existing production tasks and their runner are untouched.
 
+## HTTP service
+
+`app.py` follows the Minivet agent-service layout: it owns one shared Alfred
+client and exposes a typed FastAPI endpoint. It is an API service, not a web UI.
+
+```sh
+export IMAGE_PICKER_LLM_URL='http://YOUR-ENDPOINT/v1'
+export IMAGE_PICKER_LLM_MODEL='YOUR-MODEL'
+.venv/bin/python app.py --disable-thinking --port 8071
+```
+
+Call `POST /v1/image-processor/pick` with the same JSON contract accepted by
+`run.py`; image `source` values may be HTTP URLs, data URIs, or paths accessible
+to the service. The result contains `product_id`, validated `result`, and
+inference model/usage metadata. `GET /healthz` reports the configured model.
+
 ## Request definitions
 
 Add `assessment_definition` to the normal product/image input:
